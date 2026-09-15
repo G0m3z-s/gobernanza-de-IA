@@ -9,7 +9,7 @@ export function AISystemWizard({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const { currentOrgId } = useAuth();
-  const { fetchData } = useStore();
+  const { addAISystem } = useStore();
 
   const [formData, setFormData] = useState({
     code: '', name: '', type: 'AI_ASSISTANT', description: '',
@@ -24,13 +24,11 @@ export function AISystemWizard({ onClose }: { onClose: () => void }) {
     if (!currentOrgId || !formData.name) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, 'aiSystems'), {
+      await addAISystem({
         organizationId: currentOrgId,
         ...formData,
         lifecycleStage: 'EVALUATION',
-        createdAt: new Date().toISOString()
       });
-      if(currentOrgId) fetchData(currentOrgId);
       onClose();
     } catch (e) {
       console.error(e);
@@ -53,7 +51,7 @@ export function AISystemWizard({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[600px] overflow-hidden">
+    <div className="bg-white rounded-xl flex flex-col h-full">
       <div className="flex justify-between items-center p-6 border-b border-slate-200 bg-slate-50">
         <div className="flex items-center">
           <button onClick={onClose} className="mr-4 text-slate-500 hover:text-slate-800">

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { DashboardData, Process } from '../../types';
 import { ShieldAlert, Bot, CheckCircle2 } from 'lucide-react';
+import { Process360View } from './Process360View';
 
 export function ProcessMapTab({ data }: { data: DashboardData }) {
+  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+  
   const processes = data.processes || [];
-
   const categorize = (cat: string) => processes.filter(p => p.category === cat);
   
   const strategic = categorize('strategic');
@@ -27,12 +29,19 @@ export function ProcessMapTab({ data }: { data: DashboardData }) {
     return 95;
   };
 
+  if (selectedProcess) {
+    return <Process360View process={selectedProcess} data={data} onClose={() => setSelectedProcess(null)} />;
+  }
+
   const ProcessCard = ({ p }: { key?: string, p: Process }) => {
     const health = calculateHealth(p);
     const usesAi = (data.aiSystems || []).some(ai => ai.process === p.name);
     
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4 hover:border-teal-400 hover:shadow-md transition-all cursor-pointer">
+      <div 
+        className="bg-white border border-slate-200 rounded-xl p-4 hover:border-teal-400 hover:shadow-md transition-all cursor-pointer"
+        onClick={() => setSelectedProcess(p)}
+      >
         <div className="flex justify-between items-start mb-2">
           <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{p.code || 'N/A'}</span>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${getHealthColor(health)}`}>

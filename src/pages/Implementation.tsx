@@ -12,13 +12,27 @@ import { EvolutionTab } from '../components/implementation/EvolutionTab';
 type Tab = 'roadmap' | 'gap' | 'plan' | 'evolution';
 
 export function Implementation() {
-  const { data, fetchData, loading, error } = useStore();
+  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard } = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('roadmap');
   
   const [filters, setFilters] = useState({
-    standard: 'Integrado',
+    standard: selectedStandard || 'Integrado',
   });
+
+  // Sync back to store when standard changes
+  useEffect(() => {
+    if (filters.standard !== selectedStandard) {
+      setSelectedStandard(filters.standard);
+    }
+  }, [filters.standard, selectedStandard, setSelectedStandard]);
+
+  // Sync to local state if store changes elsewhere
+  useEffect(() => {
+    if (selectedStandard && selectedStandard !== filters.standard) {
+      setFilters(prev => ({ ...prev, standard: selectedStandard }));
+    }
+  }, [selectedStandard]);
 
   useEffect(() => {
     if (currentOrgId && !data) fetchData(currentOrgId);

@@ -7,19 +7,34 @@ import { KPIWidgets } from '../components/dashboard/KPIWidgets';
 import { HealthWidgets } from '../components/dashboard/HealthWidgets';
 import { ActionCenter } from '../components/dashboard/ActionCenter';
 import { NormativeStatus } from '../components/dashboard/NormativeStatus';
+import { MaturityDistribution } from '../components/dashboard/MaturityDistribution';
 import { EvolutionChart } from '../components/dashboard/EvolutionChart';
-import { HealthByProcess } from '../components/dashboard/HealthByProcess';
+import { ObjectivesStatus } from '../components/dashboard/ObjectivesStatus';
 import { ActivityList } from '../components/dashboard/ActivityList';
 import { RefreshCcw } from 'lucide-react';
 
 export function CommandCenter() {
-  const { data, fetchData, loading, error } = useStore();
+  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard } = useStore();
   const { currentOrgId } = useAuth();
   
   const [filters, setFilters] = useState({
-    standard: 'Integrado',
+    standard: selectedStandard || 'Integrado',
     compare: true,
   });
+
+  // Sync back to store when standard changes
+  useEffect(() => {
+    if (filters.standard !== selectedStandard) {
+      setSelectedStandard(filters.standard);
+    }
+  }, [filters.standard, selectedStandard, setSelectedStandard]);
+
+  // Sync to local state if store changes elsewhere
+  useEffect(() => {
+    if (selectedStandard && selectedStandard !== filters.standard) {
+      setFilters(prev => ({ ...prev, standard: selectedStandard }));
+    }
+  }, [selectedStandard]);
 
   useEffect(() => {
     if (currentOrgId && !data) fetchData(currentOrgId);
@@ -84,13 +99,17 @@ export function CommandCenter() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <MaturityDistribution kpis={kpis} />
+        </div>
         <div className="lg:col-span-2">
           <EvolutionChart snapshots={data.healthSnapshots} />
         </div>
-        <div className="lg:col-span-1 space-y-6">
-          <HealthByProcess data={data} />
-          <ActivityList data={data} />
-        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ObjectivesStatus data={data} />
+        <ActivityList data={data} />
       </div>
     </div>
   );

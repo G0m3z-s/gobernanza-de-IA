@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { DashboardData } from '../../types';
 import { Plus, Target, Activity } from 'lucide-react';
+import { SlideOver } from '../ui/SlideOver';
+import { ObjectiveForm } from '../forms/ObjectiveForm';
 
-export function ObjectivesTab({ data }: { data: DashboardData }) {
-  const objectives = data.objectives || [];
+export function ObjectivesTab({ data, standard = 'Integrado' }: { data: DashboardData, standard?: string }) {
+  let objectives = data.objectives || [];
+  
+  if (standard !== 'Integrado') {
+    objectives = objectives.filter(o => o.standardIds?.includes(standard));
+  }
+  
   const indicators = data.indicators || [];
+  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[600px]">
@@ -12,10 +20,13 @@ export function ObjectivesTab({ data }: { data: DashboardData }) {
         <h2 className="text-lg font-semibold text-slate-800">Objetivos e Indicadores</h2>
         
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50">
+          <button onClick={() => alert("El módulo de Indicadores Independientes será habilitado en la próxima iteración.")} className="flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50">
             <Plus className="w-4 h-4 mr-2" /> CREAR INDICADOR
           </button>
-          <button className="flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">
+          <button 
+            onClick={() => setIsSlideOverOpen(true)}
+            className="flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800"
+          >
             <Plus className="w-4 h-4 mr-2" /> CREAR OBJETIVO
           </button>
         </div>
@@ -90,6 +101,18 @@ export function ObjectivesTab({ data }: { data: DashboardData }) {
           </div>
         )}
       </div>
+
+      <SlideOver
+        isOpen={isSlideOverOpen}
+        onClose={() => setIsSlideOverOpen(false)}
+        title="Crear Nuevo Objetivo"
+        description="Establece los objetivos estratégicos para el Sistema de Gestión."
+      >
+        <ObjectiveForm 
+          onSuccess={() => setIsSlideOverOpen(false)}
+          onCancel={() => setIsSlideOverOpen(false)}
+        />
+      </SlideOver>
     </div>
   );
 }

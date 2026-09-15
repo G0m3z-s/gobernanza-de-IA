@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { DashboardData } from '../../types';
 import { Check, ChevronRight, Target, Shield, HelpCircle } from 'lucide-react';
 import { clausesInfo, normativeCatalog } from '../../data/catalog';
+import { SlideOver } from '../ui/SlideOver';
 
 export function RoadmapTab({ data, standard }: { data: DashboardData, standard: string }) {
   const [mode, setMode] = useState<'guided' | 'expert'>('expert');
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedPhase, setSelectedPhase] = useState<any>(null);
 
   const baseCatalog = standard === 'Integrado' 
     ? normativeCatalog 
@@ -101,7 +103,11 @@ export function RoadmapTab({ data, standard }: { data: DashboardData, standard: 
           {phases.map((phase) => {
             const progress = phase.total > 0 ? Math.round((phase.eval / phase.total) * 100) : 0;
             return (
-              <div key={phase.id} className="border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-md transition-all cursor-pointer group bg-white">
+              <div 
+                key={phase.id} 
+                className="border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-md transition-all cursor-pointer group bg-white"
+                onClick={() => setSelectedPhase(phase)}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold mr-3 group-hover:bg-teal-50 group-hover:text-teal-600 text-sm">
@@ -139,6 +145,41 @@ export function RoadmapTab({ data, standard }: { data: DashboardData, standard: 
           })}
         </div>
       )}
+
+      <SlideOver
+        isOpen={!!selectedPhase}
+        onClose={() => setSelectedPhase(null)}
+        title={selectedPhase?.name || ''}
+        description={selectedPhase?.desc || ''}
+      >
+        <div className="mt-4">
+          <h4 className="text-sm font-semibold text-slate-800 mb-3 border-b border-slate-200 pb-2">Requisitos de la Fase</h4>
+          <div className="space-y-3">
+            {selectedPhase && baseCatalog.filter(c => c.clause === clausesInfo[selectedPhase.id - 1].id).map(req => {
+              const assessment = data.requirementAssessments.find(a => a.clause === req.clause && a.requirementId === req.requirement && a.standard === req.standard);
+              const status = assessment?.status || 'not_evaluated';
+              return (
+                <div key={`${req.standard}-${req.clause}-${req.requirement}`} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-slate-900 text-sm">{req.standard} - {req.clause}.{req.requirement}</span>
+                    <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
+                      status === 'implemented' || status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                      status === 'gap' ? 'bg-rose-100 text-rose-700' :
+                      'bg-slate-200 text-slate-700'
+                    }`}>
+                      {status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <span className="font-bold text-slate-800 text-sm block mb-1">{req.title}</span>
+                    <p className="text-sm text-slate-600" title={req.description}>{req.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </SlideOver>
     </div>
   );
 }

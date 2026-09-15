@@ -1,16 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardData } from '../../types';
 import { calculateDashboardKPIs } from '../../utils/calculations';
-import { ArrowRight, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { AIAssistantDrawer } from '../ai/AIAssistantDrawer';
 
 export function ImplementationHeader({ data, filters, setFilters }: { data: DashboardData, filters: any, setFilters: any }) {
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const kpis = calculateDashboardKPIs(data, filters);
   
-  const verifiedCount = data.requirementAssessments.filter(r => r.status === 'verified').length;
-  const gapsCount = data.requirementAssessments.filter(r => r.status === 'gap').length;
-  const overdueCount = (data.implementationActions || []).filter(a => a.status === 'VENCIDA' || (a.status !== 'COMPLETADA' && new Date(a.dueDate) < new Date())).length;
-  
-  const unassignedCount = data.requirementAssessments.filter(r => r.ownerId === 'Sin asignar' || !r.ownerId).length;
+  const filteredReqs = data.requirementAssessments.filter(r => 
+    filters.standard === 'Integrado' || r.standard === filters.standard
+  );
+
+  const verifiedCount = filteredReqs.filter(r => r.status === 'verified').length;
+  const gapsCount = filteredReqs.filter(r => r.status === 'gap').length;
+  const unassignedCount = filteredReqs.filter(r => r.ownerId === 'Sin asignar' || !r.ownerId).length;
+
+  const filteredActions = (data.implementationActions || []).filter(a => {
+    if (filters.standard === 'Integrado') return true;
+    // An action might belong to a requirement that belongs to the standard
+    const relatedReqs = (a.requirementIds || []).map(rid => 
+      data.requirementAssessments.find(req => req.id === rid)
+    ).filter(Boolean);
+    
+    // If it has related reqs, check if any match the standard. If no reqs, just show it.
+    if (relatedReqs.length > 0) {
+      return relatedReqs.some(r => r?.standard === filters.standard);
+    }
+    return true; // Keep standalone actions
+  });
+
+  const overdueCount = filteredActions.filter(a => a.status === 'VENCIDA' || (a.status !== 'COMPLETADA' && new Date(a.dueDate) < new Date())).length;
 
   let nextBestAction = { text: "Complete el alcance antes de continuar.", action: "Ir al alcance" };
   if (unassignedCount > 0) {
@@ -67,18 +87,26 @@ export function ImplementationHeader({ data, filters, setFilters }: { data: Dash
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-slate-50 to-teal-50/30 rounded-lg p-3 flex items-center justify-between border border-slate-100">
-        <div className="flex items-center text-sm">
+      <div className="bg-gradient-to-r from-slate-50 to-teal-50/30 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between border border-slate-100 gap-3">
+        <div className="flex items-center text-sm flex-1">
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-600 mr-3 shrink-0">
             <AlertCircle className="w-3.5 h-3.5" />
           </span>
           <span className="font-semibold text-slate-700 mr-2">Siguiente mejor acción:</span>
           <span className="text-slate-600">{nextBestAction.text}</span>
         </div>
-        <button className="flex items-center text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors uppercase tracking-wider">
-          {nextBestAction.action} <ArrowRight className="w-3.5 h-3.5 ml-1" />
-        </button>
+        <div className="flex items-center space-x-3 shrink-0">
+          <button onClick={() => setIsAssistantOpen(true)} className="flex items-center text-xs font-semibold text-white bg-teal-600 px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Guía Paso a Paso
+          </button>
+        </div>
       </div>
+      
+      <AIAssistantDrawer 
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
+        context="implementation"
+      />
     </div>
   );
 }

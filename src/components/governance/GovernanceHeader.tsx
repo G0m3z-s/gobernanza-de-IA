@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardData } from '../../types';
+import { Sparkles } from 'lucide-react';
+import { AIAssistantDrawer } from '../ai/AIAssistantDrawer';
 
-export function GovernanceHeader({ data }: { data: DashboardData }) {
+export function GovernanceHeader({ data, filters, setFilters }: { data: DashboardData, filters: any, setFilters: any }) {
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const processes = data.processes || [];
   const strategic = processes.filter(p => p.category === 'strategic').length;
   const mission = processes.filter(p => p.category === 'mission').length;
@@ -19,6 +22,18 @@ export function GovernanceHeader({ data }: { data: DashboardData }) {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Gobernanza / Process Center</h1>
           <p className="text-sm text-slate-500 mt-1">Mapa operativo real de la organización, roles, objetivos e integración del sistema.</p>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <select 
+            className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-medium"
+            value={filters.standard}
+            onChange={(e) => setFilters({...filters, standard: e.target.value})}
+          >
+            <option value="Integrado">Integrado (27001 + 42001)</option>
+            <option value="ISO/IEC 27001">ISO/IEC 27001:2022</option>
+            <option value="ISO/IEC 42001">ISO/IEC 42001:2023</option>
+          </select>
         </div>
       </div>
       

@@ -50,7 +50,7 @@ export function ProcessesTab({ data }: { data: DashboardData }) {
             />
           </div>
           
-          <button className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100">
+          <button onClick={() => alert("La función de filtros está en desarrollo.")} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100">
             <Filter className="w-4 h-4 mr-2" />
             Filtros
           </button>

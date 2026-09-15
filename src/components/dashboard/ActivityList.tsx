@@ -38,7 +38,7 @@ export function ActivityList({ data }: { data: DashboardData }) {
         </div>
       )}
       
-      <button className="w-full mt-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors border border-transparent hover:border-teal-100">
+      <button onClick={() => alert("El historial de actividades completas se encuentra en desarrollo para la siguiente versión.")} className="w-full mt-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors border border-transparent hover:border-teal-100">
         VER HISTORIAL COMPLETO
       </button>
     </div>

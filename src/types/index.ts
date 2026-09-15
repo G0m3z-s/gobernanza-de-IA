@@ -162,6 +162,63 @@ export interface AuditItem {
   dueDate: string;
 }
 
+export type NonConformityStatus = 'Abierta' | 'En Investigación' | 'Plan de Acción' | 'Resuelta' | 'Cerrada';
+export interface NonConformity {
+  id: string;
+  organizationId: string;
+  title: string;
+  description: string;
+  source: 'Auditoría' | 'Incidente' | 'Revisión por la Dirección' | 'Otro';
+  standardIds?: string[];
+  identifiedDate: string;
+  reportedBy: string;
+  status: NonConformityStatus;
+  severity: 'Baja' | 'Media' | 'Alta' | 'Crítica';
+  capaIds?: string[];
+}
+
+export type CAPAStatus = 'Planeada' | 'En Progreso' | 'Implementada' | 'Verificada' | 'Cerrada';
+export interface CAPA {
+  id: string;
+  organizationId: string;
+  nonConformityId?: string;
+  title: string;
+  description: string;
+  type: 'Correctiva' | 'Preventiva' | 'Mejora';
+  ownerId: string;
+  dueDate: string;
+  status: CAPAStatus;
+  completionDate?: string;
+  verificationNotes?: string;
+}
+
+export interface NormativeControl {
+  id: string;
+  organizationId: string;
+  standard: string;
+  domain: string;
+  code: string;
+  name: string;
+  description: string;
+  applicable: boolean;
+  justification?: string;
+  implementationStatus: 'No Implementado' | 'En Proceso' | 'Implementado';
+  maturityLevel: 0 | 1 | 2 | 3 | 4 | 5;
+  ownerId: string;
+}
+
+export interface AuditSession {
+  id: string;
+  organizationId: string;
+  title: string;
+  standard: string;
+  type: 'Interna' | 'Externa' | 'Revisión por la Dirección';
+  status: 'Programada' | 'En Progreso' | 'Completada' | 'Cancelada';
+  plannedDate: string;
+  leadAuditor: string;
+  scope?: string;
+}
+
 export interface DashboardData {
   organization: Organization;
   processes: Process[];
@@ -191,6 +248,10 @@ export interface DashboardData {
   aiIncidents?: AIIncident[];
   aiProviders?: AIProvider[];
   aiHistory?: AIHistory[];
+  nonConformities?: NonConformity[];
+  capas?: CAPA[];
+  normativeControls?: NormativeControl[];
+  auditSessions?: AuditSession[];
 }
 
 export interface ImplementationAction {

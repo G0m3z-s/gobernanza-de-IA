@@ -124,7 +124,7 @@ export function CreateActionModal({ onClose, gaps, onRefresh }: { onClose: () =>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                 {gaps.map(gap => (
-                  <label key={gap.requirementId} className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${selectedGaps.includes(gap.requirementId) ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                  <label key={gap.id || gap.requirementId} className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${selectedGaps.includes(gap.requirementId) ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
                     <input 
                       type="checkbox" 
                       className="mt-1 rounded text-teal-600 focus:ring-teal-500 border-slate-300 mr-3"

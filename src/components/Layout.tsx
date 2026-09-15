@@ -2,6 +2,7 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Bell, Search, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { Link } from 'react-router-dom';
 
 export function Topbar() {
   const data = useStore(state => state.data);
@@ -31,10 +32,10 @@ export function Topbar() {
           />
         </div>
         
-        <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+        <Link to="/alerts" className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
+        </Link>
 
         <button className="flex items-center px-3 py-1.5 bg-gradient-to-r from-teal-500 to-blue-600 text-white text-sm font-medium rounded-full shadow-sm hover:opacity-90 transition-opacity">
           <Sparkles className="w-4 h-4 mr-1.5" />

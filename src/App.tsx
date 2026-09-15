@@ -10,6 +10,9 @@ import { Governance } from './pages/Governance';
 import { DocumentStudio } from './pages/DocumentStudio';
 import { EvidenceVault } from './pages/EvidenceVault';
 import { Login } from './pages/Login';
+import { Performance } from './pages/Performance';
+import { ControlCenter } from './pages/ControlCenter';
+import { AuditWorkspace } from './pages/AuditWorkspace';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -49,11 +52,11 @@ export default function App() {
           <Route path="/governance" element={<ProtectedRoute><Governance /></ProtectedRoute>} />
           <Route path="/ai-registry" element={<ProtectedRoute><AIRegistry /></ProtectedRoute>} />
           <Route path="/risks" element={<ProtectedRoute><RiskHub /></ProtectedRoute>} />
-          <Route path="/controls" element={<ProtectedRoute><PlaceholderPage title="Control Center" /></ProtectedRoute>} />
+          <Route path="/controls" element={<ProtectedRoute><ControlCenter /></ProtectedRoute>} />
           <Route path="/evidences" element={<ProtectedRoute><EvidenceVault /></ProtectedRoute>} />
           <Route path="/documents" element={<ProtectedRoute><DocumentStudio /></ProtectedRoute>} />
-          <Route path="/audit" element={<ProtectedRoute><PlaceholderPage title="Audit Workspace" /></ProtectedRoute>} />
-          <Route path="/performance" element={<ProtectedRoute><PlaceholderPage title="Desempeño y CAPA" /></ProtectedRoute>} />
+          <Route path="/audit" element={<ProtectedRoute><AuditWorkspace /></ProtectedRoute>} />
+          <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><PlaceholderPage title="Reporting Center" /></ProtectedRoute>} />
           <Route path="/calendar" element={<ProtectedRoute><PlaceholderPage title="Calendario" /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><AlertCenter /></ProtectedRoute>} />

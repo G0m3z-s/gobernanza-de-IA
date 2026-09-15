@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../context/AuthContext';
 import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
+import { AlertDetailsSlideOver } from '../components/ui/AlertDetailsSlideOver';
 
 export function AlertCenter() {
   const { data, fetchData, loading } = useStore();
   const { currentOrgId } = useAuth();
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
   useEffect(() => {
     if (currentOrgId) fetchData(currentOrgId);
@@ -28,7 +30,7 @@ export function AlertCenter() {
             <button className="px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">Todas</button>
             <button className="px-3 py-1.5 bg-transparent text-sm font-medium text-slate-600 hover:text-slate-900">No leídas (3)</button>
           </div>
-          <button className="text-sm font-medium text-teal-600 hover:text-teal-800">
+          <button onClick={() => alert("Función de marcado masivo en desarrollo.")} className="text-sm font-medium text-teal-600 hover:text-teal-800">
             Marcar todas como leídas
           </button>
         </div>
@@ -55,7 +57,10 @@ export function AlertCenter() {
                 <p className="text-slate-800 font-medium leading-snug">{alert.message}</p>
                 
                 <div className="mt-3 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="inline-flex items-center text-xs font-medium text-teal-600 hover:text-teal-800 mr-4">
+                  <button 
+                    className="inline-flex items-center text-xs font-medium text-teal-600 hover:text-teal-800 mr-4"
+                    onClick={() => setSelectedAlert(alert)}
+                  >
                     Ver Detalles
                   </button>
                   <button className="inline-flex items-center text-xs font-medium text-slate-500 hover:text-slate-700">
@@ -71,6 +76,12 @@ export function AlertCenter() {
           ))}
         </div>
       </div>
+
+      <AlertDetailsSlideOver
+        isOpen={!!selectedAlert}
+        onClose={() => setSelectedAlert(null)}
+        alert={selectedAlert}
+      />
     </div>
   );
 }

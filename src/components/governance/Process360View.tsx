@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardData, Process } from '../../types';
-import { ArrowLeft, Target, Activity, ShieldAlert, FileText, CheckCircle2, ChevronRight, Edit } from 'lucide-react';
+import { ArrowLeft, Target, Activity, ShieldAlert, FileText, CheckCircle2, ChevronRight, Edit, Settings, Users, Link as LinkIcon, Database, CheckSquare } from 'lucide-react';
+import { normativeCatalog } from '../../data/catalog';
 
 export function Process360View({ process, data, onClose }: { process: Process, data: DashboardData, onClose: () => void }) {
   const [activeTab, setActiveTab] = useState('resumen');
@@ -25,6 +26,14 @@ export function Process360View({ process, data, onClose }: { process: Process, d
   };
 
   const health = getHealthStatus();
+
+  // Data for tabs
+  const processInputs = (data.processInputs || []).filter(i => i.processId === process.id);
+  const processOutputs = (data.processOutputs || []).filter(o => o.processId === process.id);
+  const processActivities = (data.processActivities || []).filter(a => a.processId === process.id);
+  const processDependencies = (data.processDependencies || []).filter(d => d.sourceProcessId === process.id || d.targetProcessId === process.id);
+  const processAiSystems = (data.aiSystems || []).filter(ai => ai.process === process.name || ai.process === process.id);
+  const processRequirements = (data.requirementAssessments || []).filter(r => r.processId === process.id);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-hidden animate-in fade-in">
@@ -100,6 +109,8 @@ export function Process360View({ process, data, onClose }: { process: Process, d
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+        
+        {/* RESUMEN */}
         {activeTab === 'resumen' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -144,32 +155,249 @@ export function Process360View({ process, data, onClose }: { process: Process, d
           </div>
         )}
         
+        {/* CARACTERIZACIÓN (SIPOC) */}
         {activeTab === 'caracterizacion' && (
-          <div className="bg-white p-6 rounded-xl border border-slate-200 flex flex-col items-center justify-center min-h-[300px] text-center">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Caracterización Digital</h3>
-            <p className="text-sm text-slate-500 max-w-md mb-4">La ficha técnica completa del proceso con sus entradas, salidas, proveedores y clientes.</p>
-            <button className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg">EDITAR CARACTERIZACIÓN</button>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Caracterización SIPOC</h3>
+              <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg">Añadir Componente</button>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Entradas */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                  <h4 className="font-semibold text-slate-800 text-sm">Entradas y Proveedores</h4>
+                </div>
+                <div className="p-4">
+                  {processInputs.length > 0 ? (
+                    <ul className="space-y-3">
+                      {processInputs.map(input => (
+                        <li key={input.id} className="text-sm border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                          <span className="font-semibold text-slate-800 block mb-1">{input.description}</span>
+                          <span className="text-xs text-slate-500 block">Proveedor: <span className="text-slate-700">{input.supplierName}</span> ({input.supplierType})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500 italic">No hay entradas definidas para este proceso.</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Salidas */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                  <h4 className="font-semibold text-slate-800 text-sm">Salidas y Clientes</h4>
+                </div>
+                <div className="p-4">
+                  {processOutputs.length > 0 ? (
+                    <ul className="space-y-3">
+                      {processOutputs.map(output => (
+                        <li key={output.id} className="text-sm border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                          <span className="font-semibold text-slate-800 block mb-1">{output.description}</span>
+                          <span className="text-xs text-slate-500 block">Cliente: <span className="text-slate-700">{output.customerName}</span> ({output.customerType})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500 italic">No hay salidas definidas para este proceso.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
-        
-        {activeTab !== 'resumen' && activeTab !== 'caracterizacion' && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-4xl mb-4">🚧</span>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Sección en Construcción</h3>
-            <p className="text-sm text-slate-500 max-w-sm">Los submódulos de {tabName(activeTab)} estarán disponibles al finalizar el roadmap del módulo de Gobernanza.</p>
+
+        {/* ACTIVIDADES */}
+        {activeTab === 'actividades' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Flujo de Actividades</h3>
+              <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg">Añadir Actividad</button>
+            </div>
+            
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 w-12 text-center">#</th>
+                    <th className="px-4 py-3">Actividad</th>
+                    <th className="px-4 py-3">Responsable</th>
+                    <th className="px-4 py-3 text-center">IA</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {processActivities.length > 0 ? (
+                    processActivities.sort((a, b) => a.sequence - b.sequence).map(activity => (
+                      <tr key={activity.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-center font-bold text-slate-400">{activity.sequence}</td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-slate-800">{activity.name}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{activity.description}</p>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {activity.ownerRoleId || activity.ownerUserId || 'Por definir'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {activity.usesAI ? (
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700" title="Usa Inteligencia Artificial">
+                              <Settings className="w-3.5 h-3.5" />
+                            </span>
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500 text-sm italic">
+                        Aún no se han definido las actividades paso a paso para este proceso.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* RELACIONES */}
+        {activeTab === 'relaciones' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Dependencias y Relaciones</h3>
+              <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg">Vincular Proceso</button>
+            </div>
+            
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="p-4 border-b border-slate-100 bg-slate-50">
+                <p className="text-sm text-slate-600">
+                  Mapeo de interacciones con otros procesos del sistema (Upstream y Downstream).
+                </p>
+              </div>
+              <ul className="divide-y divide-slate-100 p-4">
+                {processDependencies.length > 0 ? (
+                  processDependencies.map(dep => {
+                    const isUpstream = dep.targetProcessId === process.id;
+                    const relatedProcessId = isUpstream ? dep.sourceProcessId : dep.targetProcessId;
+                    const relatedProcess = data.processes?.find(p => p.id === relatedProcessId);
+                    
+                    return (
+                      <li key={dep.id} className="py-3 flex items-start">
+                        <div className={`mt-0.5 mr-3 shrink-0 ${isUpstream ? 'text-blue-500' : 'text-purple-500'}`}>
+                          <LinkIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center mb-1">
+                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded mr-2 ${isUpstream ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                              {isUpstream ? 'Entrada (Upstream)' : 'Salida (Downstream)'}
+                            </span>
+                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Tipo: {dep.dependencyType}</span>
+                          </div>
+                          <p className="text-sm font-medium text-slate-800">{relatedProcess?.name || 'Proceso desconocido'}</p>
+                          {dep.description && <p className="text-xs text-slate-600 mt-1">{dep.description}</p>}
+                        </div>
+                      </li>
+                    );
+                  })
+                ) : (
+                  <li className="py-8 text-center text-slate-500 text-sm italic">
+                    No se han registrado dependencias formales con otros procesos.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* IA */}
+        {activeTab === 'ai' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Sistemas de IA Relacionados</h3>
+              <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg">Vincular IA</button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {processAiSystems.length > 0 ? (
+                processAiSystems.map(ai => (
+                  <div key={ai.id} className="bg-white rounded-xl border border-slate-200 p-4 hover:border-teal-300 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{ai.id}</span>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                        ai.lifecycleStage === 'OPERATION' ? 'bg-emerald-100 text-emerald-700' :
+                        ai.lifecycleStage === 'DEVELOPMENT' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {ai.lifecycleStage}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-slate-800">{ai.name}</h4>
+                    <p className="text-xs text-slate-500 mt-1 truncate">{ai.purpose}</p>
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center">
+                        <Database className="w-3.5 h-3.5 mr-1" />
+                        {ai.modelName || ai.type || "Modelo Desconocido"}
+                      </span>
+                      <button className="font-medium text-teal-600">Ver Ficha</button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 bg-white rounded-xl border border-slate-200 p-8 text-center">
+                  <Settings className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-700 mb-1">Sin Inteligencia Artificial</p>
+                  <p className="text-xs text-slate-500">Este proceso no tiene registrados sistemas o modelos de IA activos ni en desarrollo.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ISO */}
+        {activeTab === 'iso' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Requisitos ISO Mapeados</h3>
+              <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg">Asociar Requisito</button>
+            </div>
+            
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <ul className="divide-y divide-slate-100">
+                {processRequirements.length > 0 ? (
+                  processRequirements.map(req => {
+                    const catalogInfo = normativeCatalog.find(c => c.standard === req.standard && c.clause === req.clause && c.requirement === req.requirementId);
+                    
+                    return (
+                      <li key={req.id} className="p-4 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center">
+                            <span className="font-bold text-slate-800 text-sm mr-2">{req.standard} - {req.clause}.{req.requirementId}</span>
+                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
+                              req.status === 'implemented' || req.status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                              req.status === 'gap' ? 'bg-rose-100 text-rose-700' :
+                              'bg-slate-200 text-slate-700'
+                            }`}>
+                              {req.status.replace('_', ' ')}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-700">{catalogInfo?.title || 'Requisito normativo'}</p>
+                        {catalogInfo?.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{catalogInfo.description}</p>}
+                      </li>
+                    );
+                  })
+                ) : (
+                  <li className="p-8 text-center">
+                    <CheckSquare className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-slate-700 mb-1">Sin mapeo ISO</p>
+                    <p className="text-xs text-slate-500">No se han asociado requisitos específicos de las normas ISO 27001 o 42001 a este proceso.</p>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
-}
-
-function tabName(id: string) {
-  switch(id) {
-    case 'actividades': return 'Actividades de Proceso';
-    case 'relaciones': return 'Relaciones';
-    case 'iso': return 'Requisitos ISO vinculados';
-    case 'ai': return 'Sistemas IA';
-    default: return id;
-  }
 }

@@ -14,9 +14,27 @@ import { HistoryTab } from '../components/governance/HistoryTab';
 type Tab = 'processMap' | 'processes' | 'stakeholders' | 'roles' | 'objectives' | 'governanceMap' | 'history';
 
 export function Governance() {
-  const { data, fetchData, loading, error } = useStore();
+  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard } = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('processMap');
+  
+  const [filters, setFilters] = useState({
+    standard: selectedStandard || 'Integrado',
+  });
+
+  // Sync back to store when standard changes
+  useEffect(() => {
+    if (filters.standard !== selectedStandard) {
+      setSelectedStandard(filters.standard);
+    }
+  }, [filters.standard, selectedStandard, setSelectedStandard]);
+
+  // Sync to local state if store changes elsewhere
+  useEffect(() => {
+    if (selectedStandard && selectedStandard !== filters.standard) {
+      setFilters(prev => ({ ...prev, standard: selectedStandard }));
+    }
+  }, [selectedStandard]);
   
   useEffect(() => {
     if (currentOrgId && !data) fetchData(currentOrgId);
@@ -53,7 +71,7 @@ export function Governance() {
 
   return (
     <div className="space-y-6 pb-12 flex flex-col h-full">
-      <GovernanceHeader data={data} />
+      <GovernanceHeader data={data} filters={filters} setFilters={setFilters} />
 
       {/* Tabs */}
       <div className="border-b border-slate-200">
@@ -90,9 +108,9 @@ export function Governance() {
       <div className="flex-1 mt-6">
         {activeTab === 'processMap' && <ProcessMapTab data={data} />}
         {activeTab === 'processes' && <ProcessesTab data={data} />}
-        {activeTab === 'stakeholders' && <StakeholdersTab data={data} />}
-        {activeTab === 'roles' && <RolesTab data={data} />}
-        {activeTab === 'objectives' && <ObjectivesTab data={data} />}
+        {activeTab === 'stakeholders' && <StakeholdersTab data={data} standard={filters.standard} />}
+        {activeTab === 'roles' && <RolesTab data={data} standard={filters.standard} />}
+        {activeTab === 'objectives' && <ObjectivesTab data={data} standard={filters.standard} />}
         {activeTab === 'governanceMap' && <GovernanceMapTab data={data} />}
         {activeTab === 'history' && <HistoryTab data={data} />}
       </div>

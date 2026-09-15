@@ -1,17 +1,43 @@
 import { DashboardData } from "../types";
 
 export const calculateDashboardKPIs = (data: DashboardData, filters?: any) => {
+  const controls = data.normativeControls || [];
+  const standard = filters?.standard || 'Integrado';
+  
+  const applicableControls = controls.filter(c => c.applicable && (standard === 'Integrado' || c.standard === standard));
+  
+  let implementationScore = 0;
+  
+  // Real calculation for implementation
+  if (applicableControls.length > 0) {
+    const implementedControls = applicableControls.filter(c => c.implementationStatus === 'Implementado').length;
+    const inProcessControls = applicableControls.filter(c => c.implementationStatus === 'En Proceso').length;
+    
+    // Logic: Implementado = 100%, En Proceso = 50%, No Implementado = 0%
+    const totalScore = (implementedControls * 100) + (inProcessControls * 50);
+    implementationScore = Math.round(totalScore / applicableControls.length);
+  }
+
+  // Calculate maturity distribution
+  const maturityCounts = { L0: 0, L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+  applicableControls.forEach(c => {
+    const level = c.maturityLevel || 0;
+    maturityCounts[`L${level}` as keyof typeof maturityCounts]++;
+  });
+
   return {
-    implementation: 76,
-    evidence: 45,
-    efficacy: 32,
-    auditReadiness: 65,
-    globalHealth: 82,
+    implementation: implementationScore,
+    evidence: 45, // Placeholder for other modules
+    efficacy: 32, // Placeholder
+    auditReadiness: Math.round(implementationScore * 0.7), // Simplistic calculation based on implementation
+    globalHealth: implementationScore,
+    maturityCounts,
+    totalApplicableControls: applicableControls.length,
     variation: {
-      implementation: 2,
-      evidence: 5,
-      efficacy: -3,
-      auditReadiness: 4,
+      implementation: 0,
+      evidence: 0,
+      efficacy: 0,
+      auditReadiness: 0,
     },
     notTestedCount: 12,
   };

@@ -1,19 +1,215 @@
 import { create } from 'zustand';
-import { DashboardData, Process, AISystem, Risk, Alert, RequirementAssessment, ControlAssessment, HealthSnapshot, ActivityLog, AuditItem, ImplementationAction } from '../types';
-import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+import { DashboardData, Process, AISystem, Risk, Alert, RequirementAssessment, ControlAssessment, HealthSnapshot, ActivityLog, AuditItem, ImplementationAction, NormativeControl } from '../types';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 interface AppState {
   data: DashboardData | null;
   loading: boolean;
   error: string | null;
+  selectedStandard: string;
+  setSelectedStandard: (standard: string) => void;
   fetchData: (orgId: string) => Promise<void>;
+  addNonConformity: (nc: any) => Promise<void>;
+  addRisk: (risk: any) => Promise<void>;
+  addCapa: (capa: any) => Promise<void>;
+  addObjective: (objective: any) => Promise<void>;
+  addStakeholder: (stakeholder: any) => Promise<void>;
+  addGovernanceRole: (role: any) => Promise<void>;
+  addAISystem: (system: any) => Promise<void>;
+  updateNormativeControl: (id: string, updates: Partial<NormativeControl>) => Promise<void>;
+  addAuditSession: (session: any) => Promise<void>;
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   data: null,
   loading: false,
   error: null,
+  selectedStandard: 'Integrado',
+  setSelectedStandard: (standard: string) => set({ selectedStandard: standard }),
+  addNonConformity: async (nc) => {
+    try {
+      const docRef = await addDoc(collection(db, 'nonConformities'), {
+        ...nc,
+        createdAt: serverTimestamp()
+      });
+      
+      // Update local state to avoid full refetch
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            nonConformities: [...(currentData.nonConformities || []), { id: docRef.id, ...nc }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding NC:', error);
+      throw error;
+    }
+  },
+  addRisk: async (risk) => {
+    try {
+      const docRef = await addDoc(collection(db, 'risks'), {
+        ...risk,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            risks: [...(currentData.risks || []), { id: docRef.id, ...risk }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding Risk:', error);
+      throw error;
+    }
+  },
+  addCapa: async (capa) => {
+    try {
+      const docRef = await addDoc(collection(db, 'capas'), {
+        ...capa,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            capas: [...(currentData.capas || []), { id: docRef.id, ...capa }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding CAPA:', error);
+      throw error;
+    }
+  },
+  addObjective: async (objective) => {
+    try {
+      const docRef = await addDoc(collection(db, 'objectives'), {
+        ...objective,
+        createdAt: serverTimestamp(),
+      });
+      set((state) => ({
+        data: {
+          ...state.data,
+          objectives: [...(state.data?.objectives || []), { id: docRef.id, ...objective }]
+        }
+      }));
+    } catch (error) {
+      console.error('Error adding Objective:', error);
+      throw error;
+    }
+  },
+
+  addStakeholder: async (stakeholder) => {
+    try {
+      const docRef = await addDoc(collection(db, 'stakeholders'), {
+        ...stakeholder,
+        createdAt: serverTimestamp(),
+      });
+      set((state) => ({
+        data: {
+          ...state.data,
+          stakeholders: [...(state.data?.stakeholders || []), { id: docRef.id, ...stakeholder }]
+        }
+      }));
+    } catch (error) {
+      console.error('Error adding Stakeholder:', error);
+      throw error;
+    }
+  },
+
+  addGovernanceRole: async (role) => {
+    try {
+      const docRef = await addDoc(collection(db, 'governanceRoles'), {
+        ...role,
+        createdAt: serverTimestamp(),
+      });
+      set((state) => ({
+        data: {
+          ...state.data,
+          governanceRoles: [...(state.data?.governanceRoles || []), { id: docRef.id, ...role }]
+        }
+      }));
+    } catch (error) {
+      console.error('Error adding Governance Role:', error);
+      throw error;
+    }
+  },
+  addAISystem: async (system) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiSystems'), {
+        ...system,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiSystems: [...(currentData.aiSystems || []), { id: docRef.id, ...system }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI System:', error);
+      throw error;
+    }
+  },
+  updateNormativeControl: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'normativeControls', id);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData && currentData.normativeControls) {
+        set({
+          data: {
+            ...currentData,
+            normativeControls: currentData.normativeControls.map(c => 
+              c.id === id ? { ...c, ...updates } as NormativeControl : c
+            )
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating Normative Control:', error);
+      throw error;
+    }
+  },
+  addAuditSession: async (session) => {
+    try {
+      const docRef = await addDoc(collection(db, 'auditSessions'), {
+        ...session,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            auditSessions: [...(currentData.auditSessions || []), { id: docRef.id, ...session }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding Audit Session:', error);
+      throw error;
+    }
+  },
   fetchData: async (orgId: string) => {
     set({ loading: true, error: null });
     try {
@@ -28,7 +224,8 @@ export const useStore = create<AppState>((set) => ({
         'healthSnapshots', 'activityLogs', 'auditItems', 'implementationActions', 'assessmentHistory',
         'processInputs', 'processOutputs', 'processActivities', 'stakeholders', 'governanceRoles',
         'objectives', 'indicators', 'indicatorMeasurements', 'processDependencies', 'processHistory',
-        'aiImpactAssessments', 'aiDataResources', 'aiLifecycleEvents', 'aiIncidents', 'aiProviders', 'aiHistory'
+        'aiImpactAssessments', 'aiDataResources', 'aiLifecycleEvents', 'aiIncidents', 'aiProviders', 'aiHistory',
+        'nonConformities', 'capas', 'normativeControls', 'auditSessions'
       ];
 
       const results = await Promise.all(collectionsToFetch.map(async (coll) => {
@@ -67,6 +264,10 @@ export const useStore = create<AppState>((set) => ({
           aiIncidents: results[24] as any[] || [],
           aiProviders: results[25] as any[] || [],
           aiHistory: (results[26] as any[] || []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+          nonConformities: results[27] as any[] || [],
+          capas: results[28] as any[] || [],
+          normativeControls: results[29] as any[] || [],
+          auditSessions: results[30] as any[] || [],
         }, 
         loading: false 
       });
