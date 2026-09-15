@@ -1,0 +1,209 @@
+{
+  "collections": [
+    {
+      "name": "organizations",
+      "documents": [
+        {
+          "id": "org-nova",
+          "data": {
+            "name": "NOVA LOGÍSTICA S.A.S.",
+            "sector": "Logística",
+            "country": "Colombia",
+            "city": "Bogotá",
+            "employees": 450,
+            "leader": "Ana Martínez",
+            "email": "amartinez@novalogistica.com",
+            "standards": ["ISO/IEC 27001", "ISO/IEC 42001"],
+            "status": "En proceso",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "memberships",
+      "documents": [
+        {
+          "id": "demouser_org-nova",
+          "data": {
+            "userId": "demouser",
+            "organizationId": "org-nova",
+            "role": "organization_admin",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "processes",
+      "documents": [
+        {
+          "id": "proc-1",
+          "data": {
+            "organizationId": "org-nova",
+            "code": "GER",
+            "name": "Gerencia",
+            "objective": "Liderar estratégicamente la organización.",
+            "leader": "Carlos Ruiz",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        },
+        {
+          "id": "proc-2",
+          "data": {
+            "organizationId": "org-nova",
+            "code": "TI",
+            "name": "TI",
+            "objective": "Garantizar la disponibilidad de los servicios tecnológicos.",
+            "leader": "Luis Gómez",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "aiSystems",
+      "documents": [
+        {
+          "id": "ai-1",
+          "data": {
+            "organizationId": "org-nova",
+            "name": "Asistente RRHH",
+            "process": "Talento Humano",
+            "type": "Chatbot",
+            "riskRating": "Medio",
+            "approvalStatus": "Aprobado",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        },
+        {
+          "id": "ai-2",
+          "data": {
+            "organizationId": "org-nova",
+            "name": "Chatbot de clientes",
+            "process": "Servicio al Cliente",
+            "type": "Agente AI",
+            "riskRating": "Alto",
+            "approvalStatus": "Pendiente",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "risks",
+      "documents": [
+        {
+          "id": "risk-1",
+          "data": {
+            "organizationId": "org-nova",
+            "name": "Fuga de datos personales por chatbot",
+            "type": "Seguridad / IA",
+            "level": "Alto",
+            "status": "Abierto",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        },
+        {
+          "id": "risk-2",
+          "data": {
+            "organizationId": "org-nova",
+            "name": "Sesgo en selección de personal",
+            "type": "IA",
+            "level": "Medio",
+            "status": "Tratado",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "alerts",
+      "documents": [
+        {
+          "id": "alert-1",
+          "data": {
+            "organizationId": "org-nova",
+            "type": "CRÍTICO",
+            "message": "Riesgo residual 'Interrupción de servicios cloud' fuera de tolerancia",
+            "date": "Hoy",
+            "status": "unread",
+            "createdAt": "2026-09-14T10:00:00Z"
+          }
+        },
+        {
+          "id": "alert-2",
+          "data": {
+            "organizationId": "org-nova",
+            "type": "ALTO",
+            "message": "Sistema IA 'Chatbot de clientes' sin impacto evaluado",
+            "date": "Ayer",
+            "status": "unread",
+            "createdAt": "2026-09-13T10:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "evidences",
+      "documents": [
+        {
+          "id": "ev-1",
+          "data": {
+            "organizationId": "org-nova",
+            "name": "Matriz de Riesgos Q3",
+            "description": "Actualización trimestral de riesgos de TI e IA.",
+            "type": "Matriz",
+            "owner": "Luis Gómez",
+            "process": "TI",
+            "expires": "2026-12-31",
+            "status": "Vigente",
+            "controls": 5,
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "documents",
+      "documents": [
+        {
+          "id": "doc-1",
+          "data": {
+            "organizationId": "org-nova",
+            "code": "NOVA-SGIA-TI-POL-001-V01",
+            "name": "Política de Seguridad de la Información",
+            "type": "Política",
+            "process": "TI",
+            "status": "Vigente",
+            "version": "V01",
+            "date": "2026-09-01",
+            "createdAt": "2026-09-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "dashboardMetrics",
+      "documents": [
+        {
+          "id": "org-nova-metrics",
+          "data": {
+            "organizationId": "org-nova",
+            "implementation": 72,
+            "evidence": 61,
+            "efficacy": 54,
+            "auditReadiness": 47,
+            "priorities": [
+              "1 evidencia vence en 7 días.",
+              "2 riesgos altos no tienen tratamiento aprobado.",
+              "1 sistema de IA requiere reevaluación.",
+              "3 acciones correctivas están vencidas."
+            ],
+            "updatedAt": "2026-09-14T00:00:00Z"
+          }
+        }
+      ]
+    }
+  ]
+}
