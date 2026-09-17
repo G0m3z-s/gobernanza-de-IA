@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { DashboardData, AISystem } from '../../types';
 import { ArrowLeft, Edit, ShieldAlert, CheckCircle2, Activity, Database, AlertTriangle } from 'lucide-react';
+import { AILifecycle360Tab } from './AILifecycle360Tab';
+import { AIDataTab } from './AIDataTab';
+import { AIProvidersTab } from './AIProvidersTab';
+import { AIMonitoring360Tab } from './AIMonitoring360Tab';
+import { AIIncidents360Tab } from './AIIncidents360Tab';
 
-export function AI360View({ system, data, onClose }: { system: AISystem, data: DashboardData, onClose: () => void }) {
+export function AI360View({ system, data, onClose, onEdit, onEvaluateImpact }: { system: AISystem, data: DashboardData, onClose: () => void, onEdit?: () => void, onEvaluateImpact?: () => void }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [viewMode, setViewMode] = useState<'ejecutiva' | 'experta'>('ejecutiva');
 
@@ -57,7 +62,7 @@ export function AI360View({ system, data, onClose }: { system: AISystem, data: D
               <span className="text-[10px] font-bold uppercase">Riesgo IA</span>
               <span className="text-lg font-black uppercase">{system.riskLevel || 'BAJO'}</span>
             </div>
-            <button className="mt-2 text-xs font-semibold text-teal-600 flex items-center hover:text-teal-700">
+            <button onClick={onEdit} className="mt-2 text-xs font-semibold text-teal-600 flex items-center hover:text-teal-700">
               <Edit className="w-3 h-3 mr-1" /> EDITAR SISTEMA
             </button>
           </div>
@@ -108,8 +113,11 @@ export function AI360View({ system, data, onClose }: { system: AISystem, data: D
             { id: 'impact', name: 'IMPACTO' },
             { id: 'lifecycle', name: 'CICLO DE VIDA' },
             { id: 'data', name: 'DATOS' },
+            { id: 'providers', name: 'PROVEEDORES' },
             { id: 'risks', name: 'RIESGOS Y CONTROLES' },
-            { id: 'monitoring', name: 'MONITOREO' }
+            { id: 'monitoring', name: 'MONITOREO' },
+            { id: 'incidents', name: 'INCIDENTES' },
+            { id: 'history', name: 'HISTORIAL' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -196,7 +204,7 @@ export function AI360View({ system, data, onClose }: { system: AISystem, data: D
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <ShieldAlert className="w-12 h-12 text-amber-300 mb-4" />
                 <h3 className="text-lg font-semibold text-slate-800 mb-2">Este sistema todavía no tiene evaluación de impacto.</h3>
-                <button className="px-4 py-2 mt-4 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">
+                <button onClick={onEvaluateImpact} className="px-4 py-2 mt-4 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">
                   EVALUAR IMPACTO
                 </button>
               </div>
@@ -204,7 +212,13 @@ export function AI360View({ system, data, onClose }: { system: AISystem, data: D
           </div>
         )}
         
-        {activeTab !== 'overview' && activeTab !== 'impact' && (
+        {activeTab === 'lifecycle' && <AILifecycle360Tab system={system} data={data} />}
+        {activeTab === 'data' && <AIDataTab data={data} preselectedSystemId={system.id} />}
+        {activeTab === 'providers' && <AIProvidersTab data={data} preselectedSystemId={system.id} />}
+        {activeTab === 'monitoring' && <AIMonitoring360Tab system={system} data={data} />}
+        {activeTab === 'incidents' && <AIIncidents360Tab system={system} data={data} />}
+        
+        {activeTab !== 'overview' && activeTab !== 'impact' && activeTab !== 'lifecycle' && activeTab !== 'data' && activeTab !== 'providers' && activeTab !== 'monitoring' && activeTab !== 'incidents' && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="text-4xl mb-4">🚧</span>
             <h3 className="text-lg font-semibold text-slate-800 mb-2">Sección en Construcción</h3>

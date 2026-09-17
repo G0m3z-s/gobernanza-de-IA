@@ -10,7 +10,7 @@ interface RiskFormProps {
 
 export function RiskForm({ onSuccess, onCancel }: RiskFormProps) {
   const { addRisk, selectedStandard } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function RiskForm({ onSuccess, onCancel }: RiskFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrgId || !currentUser) return;
+    if (!currentOrgId || !user) return;
 
     setLoading(true);
     setError(null);
@@ -40,7 +40,7 @@ export function RiskForm({ onSuccess, onCancel }: RiskFormProps) {
         level: formData.level,
         status: formData.status,
         identifiedDate: new Date().toISOString(),
-        reportedBy: currentUser.displayName || currentUser.email || 'Sistema',
+        reportedBy: user?.displayName || user?.email || 'Sistema',
         standardIds: formData.standardIds,
       };
 

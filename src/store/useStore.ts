@@ -17,7 +17,21 @@ interface AppState {
   addStakeholder: (stakeholder: any) => Promise<void>;
   addGovernanceRole: (role: any) => Promise<void>;
   addAISystem: (system: any) => Promise<void>;
+  updateAISystem: (id: string, updates: any) => Promise<void>;
+  addAIImpactAssessment: (assessment: any) => Promise<void>;
+  updateAIImpactAssessment: (id: string, updates: any) => Promise<void>;
+  addAILifecycleEvent: (event: any) => Promise<void>;
+  addAIDataResource: (resource: any) => Promise<void>;
+  addAIProvider: (provider: any) => Promise<void>;
+  updateAIProvider: (id: string, updates: any) => Promise<void>;
+  addAIMetric: (metric: any) => Promise<void>;
+  addAIIncident: (incident: any) => Promise<void>;
+  updateAIIncident: (id: string, updates: any) => Promise<void>;
+  addAlert: (alert: any) => Promise<void>;
+  updateAIDataResource: (id: string, updates: any) => Promise<void>;
   updateNormativeControl: (id: string, updates: Partial<NormativeControl>) => Promise<void>;
+  updateControlAssessment: (id: string, updates: Partial<ControlAssessment>) => Promise<void>;
+  addControlAssessment: (assessment: any) => Promise<string>;
   addAuditSession: (session: any) => Promise<void>;
 }
 
@@ -144,6 +158,264 @@ export const useStore = create<AppState>((set, get) => ({
       throw error;
     }
   },
+  updateAISystem: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'aiSystems', id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      
+      // Registrar cambio en activityLogs
+      try {
+        await addDoc(collection(db, 'activityLogs'), {
+           organizationId: updates.organizationId,
+           userId: 'system',
+           action: 'UPDATE_AI_SYSTEM',
+           details: 'Sistema IA editado/actualizado (360 View)',
+           timestamp: new Date().toISOString(),
+           targetId: id
+        });
+      } catch (e) {
+        console.error('Error recording log', e);
+      }
+      set(state => {
+        if (!state.data) return state;
+        const currentSystems = state.data.aiSystems || [];
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            aiSystems: currentSystems.map(s => s.id === id ? { ...s, ...updates } : s)
+          }
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+  addAIImpactAssessment: async (assessment) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiImpactAssessments'), {
+        ...assessment,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiImpactAssessments: [...(currentData.aiImpactAssessments || []), { id: docRef.id, ...assessment }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Impact Assessment:', error);
+      throw error;
+    }
+  },
+  addAIMetric: async (metric) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiMetrics'), {
+        ...metric,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiMetrics: [...(currentData.aiMetrics || []), { id: docRef.id, ...metric }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Metric:', error);
+      throw error;
+    }
+  },
+  addAIIncident: async (incident) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiIncidents'), {
+        ...incident,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiIncidents: [...(currentData.aiIncidents || []), { id: docRef.id, ...incident }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Incident:', error);
+      throw error;
+    }
+  },
+  updateAIIncident: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'aiIncidents', id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      set(state => {
+        if (!state.data) return state;
+        const current = state.data.aiIncidents || [];
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            aiIncidents: current.map(i => i.id === id ? { ...i, ...updates } : i)
+          }
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+  addAlert: async (alert) => {
+    try {
+      // In a real app we might write to Firestore, but if Alerts are local/mocked or we just update state
+      // We will write to 'alerts' collection just in case
+      const docRef = await addDoc(collection(db, 'alerts'), alert);
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            alerts: [...(currentData.alerts || []), { id: docRef.id, ...alert }]
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  addAIProvider: async (provider) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiProviders'), {
+        ...provider,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiProviders: [...(currentData.aiProviders || []), { id: docRef.id, ...provider }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Provider:', error);
+      throw error;
+    }
+  },
+  updateAIProvider: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'aiProviders', id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      set(state => {
+        if (!state.data) return state;
+        const currentProviders = state.data.aiProviders || [];
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            aiProviders: currentProviders.map(p => p.id === id ? { ...p, ...updates } : p)
+          }
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+  addAIDataResource: async (resource) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiDataResources'), {
+        ...resource,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiDataResources: [...(currentData.aiDataResources || []), { id: docRef.id, ...resource }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Data Resource:', error);
+      throw error;
+    }
+  },
+  updateAIDataResource: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'aiDataResources', id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      set(state => {
+        if (!state.data) return state;
+        const currentDataResources = state.data.aiDataResources || [];
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            aiDataResources: currentDataResources.map(r => r.id === id ? { ...r, ...updates } : r)
+          }
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+  addAILifecycleEvent: async (event) => {
+    try {
+      const docRef = await addDoc(collection(db, 'aiLifecycleEvents'), {
+        ...event,
+        createdAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            aiLifecycleEvents: [...(currentData.aiLifecycleEvents || []), { id: docRef.id, ...event }]
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding AI Lifecycle Event:', error);
+      throw error;
+    }
+  },
+  updateAIImpactAssessment: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'aiImpactAssessments', id);
+      await updateDoc(docRef, { ...updates, updatedAt: new Date().toISOString() });
+      set(state => {
+        if (!state.data) return state;
+        const currentImpacts = state.data.aiImpactAssessments || [];
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            aiImpactAssessments: currentImpacts.map(i => i.id === id ? { ...i, ...updates } : i)
+          }
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
   addAISystem: async (system) => {
     try {
       const docRef = await addDoc(collection(db, 'aiSystems'), {
@@ -165,6 +437,54 @@ export const useStore = create<AppState>((set, get) => ({
       throw error;
     }
   },
+  addControlAssessment: async (assessment) => {
+    try {
+      const docRef = await addDoc(collection(db, 'controlAssessments'), {
+        ...assessment,
+        updatedAt: serverTimestamp()
+      });
+      set((state) => {
+        if (!state.data) return state;
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            controlAssessments: [...(state.data.controlAssessments || []), { id: docRef.id, ...assessment } as ControlAssessment]
+          }
+        };
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error adding Control Assessment:', error);
+      throw error;
+    }
+  },
+
+  updateControlAssessment: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'controlAssessments', id);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      set((state) => {
+        if (!state.data) return state;
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            controlAssessments: (state.data.controlAssessments || []).map(c => 
+              c.id === id ? { ...c, ...updates } as ControlAssessment : c
+            )
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Error updating Control Assessment:', error);
+      throw error;
+    }
+  },
+
   updateNormativeControl: async (id, updates) => {
     try {
       const docRef = doc(db, 'normativeControls', id);
@@ -225,7 +545,7 @@ export const useStore = create<AppState>((set, get) => ({
         'processInputs', 'processOutputs', 'processActivities', 'stakeholders', 'governanceRoles',
         'objectives', 'indicators', 'indicatorMeasurements', 'processDependencies', 'processHistory',
         'aiImpactAssessments', 'aiDataResources', 'aiLifecycleEvents', 'aiIncidents', 'aiProviders', 'aiHistory',
-        'nonConformities', 'capas', 'normativeControls', 'auditSessions'
+        'nonConformities', 'capas', 'normativeControls', 'auditSessions', 'aiMetrics'
       ];
 
       const results = await Promise.all(collectionsToFetch.map(async (coll) => {
@@ -268,6 +588,7 @@ export const useStore = create<AppState>((set, get) => ({
           capas: results[28] as any[] || [],
           normativeControls: results[29] as any[] || [],
           auditSessions: results[30] as any[] || [],
+          aiMetrics: results[31] as any[] || [],
         }, 
         loading: false 
       });

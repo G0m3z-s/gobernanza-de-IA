@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardData } from '../../types';
-import { normativeCatalog } from '../../data/catalog';
+import { normativeCatalog as legacyCatalog } from '../../data/catalog';
+import { getISO42001AdaptedCatalog, getISO42001AdaptedControls } from '../../data/normativeCatalogAdapter';
 import { Search, Filter, AlertCircle } from 'lucide-react';
 import { RequirementDrawer } from './RequirementDrawer';
 
@@ -31,18 +32,53 @@ const statusColors: Record<string, string> = {
 export function GapAssessmentTab({ data, standard, onRefresh }: { data: DashboardData, standard: string, onRefresh: () => void }) {
   const [view, setView] = useState<'cards' | 'matrix'>('matrix');
   const [selectedReq, setSelectedReq] = useState<any>(null);
+  const [activeCategory, setActiveCategory] = useState<'requirements' | 'controls'>('requirements');
 
-  const baseCatalog = standard === 'Integrado' 
-    ? normativeCatalog 
-    : normativeCatalog.filter(c => c.standard === standard);
+  const getCatalogForCategory = () => {
+    if (activeCategory === 'requirements') {
+      return standard === 'Integrado' 
+        ? [...legacyCatalog.filter(c => c.standard === 'ISO/IEC 27001' && c.clause !== 'Anexo A'), ...getISO42001AdaptedCatalog()]
+        : standard === 'ISO/IEC 42001'
+          ? getISO42001AdaptedCatalog()
+          : legacyCatalog.filter(c => c.standard === standard && c.clause !== 'Anexo A');
+    } else {
+      return standard === 'Integrado'
+        ? [...legacyCatalog.filter(c => c.standard === 'ISO/IEC 27001' && c.clause === 'Anexo A'), ...getISO42001AdaptedControls()]
+        : standard === 'ISO/IEC 42001'
+          ? getISO42001AdaptedControls()
+          : legacyCatalog.filter(c => c.standard === standard && c.clause === 'Anexo A');
+    }
+  };
+
+  const baseCatalog = getCatalogForCategory();
 
   // Merge catalog with assessments from Firestore
   const enrichedCatalog = baseCatalog.map(catReq => {
-    const assessment = data.requirementAssessments.find(a => a.clause === catReq.clause && a.standard === catReq.standard);
+    const isNewControl = (catReq as any).type === 'control';
+    
+    let assessment;
+    if (isNewControl) {
+      assessment = data.controlAssessments?.find(a => a.control === catReq.requirement && a.standard === catReq.standard);
+      if (!assessment && (catReq as any).legacyControlId) {
+        assessment = data.controlAssessments?.find(a => a.control === (catReq as any).legacyControlId && a.standard === catReq.standard);
+      }
+    } else {
+      assessment = data.requirementAssessments?.find(a => a.requirementId === catReq.requirement && a.standard === catReq.standard);
+      if (!assessment && (catReq as any).legacyRequirementId) {
+        assessment = data.requirementAssessments?.find(a => a.requirementId === (catReq as any).legacyRequirementId && a.standard === catReq.standard);
+      }
+    }
+
+    const resolvedAssessmentId = assessment 
+       ? (isNewControl ? (assessment as any).control : (assessment as any).requirementId)
+       : catReq.requirement;
+
     return {
       ...catReq,
+      requirement: resolvedAssessmentId,
       status: assessment ? assessment.status : 'not_evaluated',
-      assessmentId: assessment?.id
+      assessmentId: assessment?.id,
+      justification: (assessment as any)?.justification || ''
     };
   });
 
@@ -50,6 +86,20 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
     <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm min-h-[500px] flex flex-col relative">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-slate-800">Gap Assessment</h2>
+        <div className="flex bg-slate-100 p-1 rounded-lg ml-4">
+          <button
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeCategory === 'requirements' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+            onClick={() => setActiveCategory('requirements')}
+          >
+            Requisitos
+          </button>
+          <button
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeCategory === 'controls' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+            onClick={() => setActiveCategory('controls')}
+          >
+            Anexo A / Controles
+          </button>
+        </div>
         
         <div className="flex items-center space-x-4">
           <div className="relative">
@@ -99,7 +149,7 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
               {enrichedCatalog.map((req, i) => (
                 <tr key={i} className="hover:bg-slate-50 cursor-pointer transition-colors" onClick={() => setSelectedReq(req)}>
                   <td className="px-4 py-3 text-slate-600 font-medium whitespace-nowrap">{req.standard.split(' ')[1]}</td>
-                  <td className="px-4 py-3 text-slate-800 font-semibold">{req.requirement}</td>
+                  <td className="px-4 py-3 text-slate-800 font-semibold">{(req as any).code || req.requirement}</td>
                   <td className="px-4 py-3 text-slate-700 truncate max-w-md" title={req.title}>{req.title}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[req.status] || statusColors.not_evaluated}`}>
@@ -125,7 +175,7 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
           {enrichedCatalog.map((req, i) => (
             <div key={i} onClick={() => setSelectedReq(req)} className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer flex flex-col h-full">
               <div className="flex justify-between items-start mb-3">
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{req.standard.split(' ')[1]} • {req.requirement}</span>
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{req.standard.split(' ')[1]} • {(req as any).code || req.requirement}</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[req.status] || statusColors.not_evaluated}`}>
                   {statusLabels[req.status] || 'No evaluado'}
                 </span>

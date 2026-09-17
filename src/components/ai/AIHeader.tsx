@@ -21,7 +21,7 @@ export function AIHeader({ data }: { data: DashboardData }) {
   
   const overdueReview = aiSystems.filter(s => s.nextReviewDate && new Date(s.nextReviewDate) < new Date()).length;
   
-  const openIncidents = incidents.filter(i => i.status !== 'closed' && i.status !== 'resolved').length;
+  const openIncidents = incidents.filter(i => i.status !== 'closed' && i.status !== 'contained' && i.status !== 'corrective_action').length;
   
   const inProduction = aiSystems.filter(s => s.lifecycleStage === 'OPERATION').length;
   const inDevelopment = aiSystems.filter(s => s.lifecycleStage === 'DEVELOPMENT' || s.lifecycleStage === 'DESIGN' || s.lifecycleStage === 'EVALUATION').length;

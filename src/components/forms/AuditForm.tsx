@@ -10,7 +10,7 @@ interface AuditFormProps {
 
 export function AuditForm({ onSuccess, onCancel }: AuditFormProps) {
   const { addAuditSession, selectedStandard } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function AuditForm({ onSuccess, onCancel }: AuditFormProps) {
     type: 'Interna',
     status: 'Programada',
     plannedDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    leadAuditor: currentUser?.displayName || currentUser?.email || 'Auditor',
+    leadAuditor: user?.displayName || user?.email || 'Auditor',
     scope: ''
   });
 

@@ -10,7 +10,7 @@ interface StakeholderFormProps {
 
 export function StakeholderForm({ onSuccess, onCancel }: StakeholderFormProps) {
   const { addStakeholder, selectedStandard } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export function StakeholderForm({ onSuccess, onCancel }: StakeholderFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrgId || !currentUser) return;
+    if (!currentOrgId || !user) return;
 
     setLoading(true);
     setError(null);

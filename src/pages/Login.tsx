@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInAnonymously } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { auth } from '../lib/firebase';
 import { Cpu, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -19,22 +21,45 @@ export function Login() {
       navigate('/');
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        try {
-          const userCred = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(userCred.user, { displayName: 'Usuario Nuevo' });
-          navigate('/');
-        } catch (createErr: any) {
-          setError(createErr.message);
-        }
+        setError('Credenciales inválidas o usuario no registrado.');
       } else {
         setError(err.message);
       }
     }
   };
 
-  const handleMockLogin = () => {
-    mockLogin();
-    navigate('/');
+  const handleMockLogin = async () => {
+    try {
+      // Create a random demo user with Email/Password (since Anonymous auth might be disabled)
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const demoEmail = `demo_${randomId}@empresa.com`;
+      const demoPass = 'demo123456';
+      
+      const userCred = await createUserWithEmailAndPassword(auth, demoEmail, demoPass);
+      const uid = userCred.user.uid;
+      
+      await updateProfile(userCred.user, { displayName: 'Usuario Demo' });
+      
+      // Auto-provision demo tenant
+      const orgId = 'org-demo-' + randomId;
+      
+      await setDoc(doc(db, 'organizations', orgId), {
+        name: 'Empresa Demo (Autogenerada)',
+        sector: 'Tecnología',
+        status: 'active'
+      });
+      
+      await setDoc(doc(db, 'memberships', `${uid}_${orgId}`), {
+        userId: uid,
+        organizationId: orgId,
+        role: 'organization_admin',
+        status: 'active'
+      });
+      
+      navigate('/');
+    } catch (err: any) {
+      setError('Error creando entorno de prueba: ' + err.message);
+    }
   };
 
   return (

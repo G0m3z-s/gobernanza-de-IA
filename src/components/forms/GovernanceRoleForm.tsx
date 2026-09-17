@@ -10,7 +10,7 @@ interface GovernanceRoleFormProps {
 
 export function GovernanceRoleForm({ onSuccess, onCancel }: GovernanceRoleFormProps) {
   const { addGovernanceRole, selectedStandard, data } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function GovernanceRoleForm({ onSuccess, onCancel }: GovernanceRoleFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrgId || !currentUser) return;
+    if (!currentOrgId || !user) return;
 
     setLoading(true);
     setError(null);

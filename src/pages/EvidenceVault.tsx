@@ -9,24 +9,29 @@ export function EvidenceVault() {
   const { currentOrgId } = useAuth();
   const [evidences, setEvidences] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
     async function fetchEvidences() {
       if (!currentOrgId) return;
       setLoading(true);
       try {
+        setError(null);
         const q = query(collection(db, 'evidences'), where('organizationId', '==', currentOrgId));
         const snap = await getDocs(q);
         setEvidences(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (e) {
-        console.error(e);
+        console.error("Error fetching evidences:", e);
+        setError("No fue posible cargar la información.");
       }
       setLoading(false);
     }
     fetchEvidences();
   }, [currentOrgId]);
 
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div><p className="mt-4 text-slate-500 font-medium">Cargando Evidencias...</p></div></div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div><p className="mt-4 text-slate-500 font-medium">Cargando Evidencias...</p></div></div>;
+
+  if (error) return <div className="p-8 text-center text-red-500 font-medium bg-red-50 rounded-lg border border-red-200 mt-6 mx-6">{error}</div>;
 
   return (
     <div className="space-y-6">

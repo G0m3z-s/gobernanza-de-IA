@@ -11,7 +11,7 @@ interface CAPAFormProps {
 
 export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProps) {
   const { addCapa, data } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,12 +22,12 @@ export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProp
     type: 'Correctiva',
     nonConformityId: defaultNcId,
     dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days from now
-    ownerId: currentUser?.displayName || currentUser?.email || 'Sistema',
+    ownerId: user?.displayName || user?.email || 'Sistema',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrgId || !currentUser) return;
+    if (!currentOrgId || !user) return;
 
     setLoading(true);
     setError(null);

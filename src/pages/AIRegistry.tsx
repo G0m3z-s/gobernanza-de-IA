@@ -4,33 +4,22 @@ import { useAuth } from '../context/AuthContext';
 import { Cpu, Plus, Filter, Box } from 'lucide-react';
 import { SlideOver } from '../components/ui/SlideOver';
 import { AISystemWizard } from '../components/ai/AISystemWizard';
+import { AIHeader } from '../components/ai/AIHeader';
+import { AIImpactTab } from '../components/ai/AIImpactTab';
+import { AILifecycleTab } from '../components/ai/AILifecycleTab';
+import { AIDataTab } from '../components/ai/AIDataTab';
+import { AIProvidersTab } from '../components/ai/AIProvidersTab';
+import { AIMonitoringTab } from '../components/ai/AIMonitoringTab';
+import { AIGovernanceMapTab } from '../components/ai/AIGovernanceMapTab';
+import { AIHistoryTab } from '../components/ai/AIHistoryTab';
+import { AI360View } from '../components/ai/AI360View';
 
-export function AIRegistry() {
-  const { data, fetchData, loading } = useStore();
-  const { currentOrgId } = useAuth();
-  
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
-
-  useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId, data]);
-
-  if (loading || !data) return (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-pulse flex flex-col items-center">
-        <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 font-medium">Cargando AI Registry...</p>
-      </div>
-    </div>
-  );
-
-  const aiSystems = data.aiSystems || [];
-
+function AIRegistryTab({ aiSystems, setIsWizardOpen, setSelectedSystem }: { aiSystems: any[], setIsWizardOpen: (val: boolean) => void, setSelectedSystem: (sys: any) => void }) {
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">AI Registry (Inventario de IA)</h1>
+          <h2 className="text-xl font-bold text-slate-800 tracking-tight">AI Registry (Inventario de IA)</h2>
           <p className="text-sm text-slate-500 mt-1">Inventario centralizado de modelos, asistentes y sistemas de Inteligencia Artificial (ISO 42001).</p>
         </div>
         <div className="flex gap-2">
@@ -65,10 +54,10 @@ export function AIRegistry() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800 flex items-center">
+          <h3 className="font-semibold text-slate-800 flex items-center">
             <Cpu className="w-5 h-5 mr-2 text-slate-500" />
             Inventario de Activos
-          </h2>
+          </h3>
           <button className="inline-flex items-center px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors">
             <Filter className="w-4 h-4 mr-2" />
             Filtros
@@ -90,7 +79,7 @@ export function AIRegistry() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {aiSystems.map((ai) => (
-                  <tr key={ai.id} className="hover:bg-slate-50 group transition-colors">
+                  <tr key={ai.id} className="hover:bg-slate-50 group transition-colors cursor-pointer" onClick={() => setSelectedSystem(ai)}>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-900">{ai.name}</p>
                       <p className="text-xs text-slate-500 mt-0.5">{ai.code || ai.id.substring(0,8).toUpperCase()}</p>
@@ -123,7 +112,7 @@ export function AIRegistry() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-teal-600 hover:text-teal-900 font-medium text-sm transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedSystem(ai); }} className="text-teal-600 hover:text-teal-900 font-medium text-sm transition-colors">
                         Evaluar
                       </button>
                     </td>
@@ -151,15 +140,129 @@ export function AIRegistry() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export function AIRegistry() {
+  const { data, fetchData, loading, error } = useStore();
+  const { currentOrgId } = useAuth();
+  
+  const [activeTab, setActiveTab] = useState('registry');
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [impactSystemId, setImpactSystemId] = useState<string | undefined>(undefined);
+  const [dataSystemId, setDataSystemId] = useState<string | undefined>(undefined);
+  const [providerSystemId, setProviderSystemId] = useState<string | undefined>(undefined);
+  const [selectedSystem, setSelectedSystem] = useState<any>(null);
+  const [systemToEdit, setSystemToEdit] = useState<any>(null);
+
+  useEffect(() => {
+    if (currentOrgId && !data) fetchData(currentOrgId);
+  }, [fetchData, currentOrgId, data]);
+
+  if (loading || !data) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="animate-pulse flex flex-col items-center">
+        <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 font-medium">Cargando Inteligencia Artificial...</p>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="bg-rose-50 border border-rose-200 p-6 rounded-xl text-center">
+        <p className="text-rose-700 font-medium">Error al cargar datos.</p>
+        <p className="text-rose-600 text-sm mt-2">{error}</p>
+      </div>
+    </div>
+  );
+
+  const tabs = [
+    { id: 'registry', label: 'AI REGISTRY' },
+    { id: 'impact', label: 'AI IMPACT' },
+    { id: 'lifecycle', label: 'CICLO DE VIDA' },
+    { id: 'data', label: 'DATOS Y RECURSOS' },
+    { id: 'providers', label: 'PROVEEDORES' },
+    { id: 'monitoring', label: 'MONITOREO E INCIDENTES' },
+    { id: 'governance', label: 'GOVERNANCE MAP' },
+    { id: 'history', label: 'HISTORIAL' }
+  ];
+
+  if (selectedSystem) {
+    return (
+      <div className="pb-12">
+        <AI360View 
+          system={selectedSystem} 
+          data={data} 
+          onClose={() => setSelectedSystem(null)}
+          onEdit={() => {
+            setSystemToEdit(selectedSystem);
+            setIsWizardOpen(true);
+          }}
+          onEvaluateImpact={() => {
+            setImpactSystemId(selectedSystem.id);
+            setSelectedSystem(null);
+            setActiveTab('impact');
+          }}
+        />
+        <SlideOver
+          isOpen={isWizardOpen}
+          onClose={() => { setIsWizardOpen(false); setSystemToEdit(null); }}
+          title={systemToEdit ? "Editar Sistema IA" : "Evaluación Inicial de IA (Screening)"}
+          description="Completa el cuestionario para registrar y pre-clasificar un nuevo sistema de IA."
+        >
+          <div className="h-full">
+            <AISystemWizard key={systemToEdit ? systemToEdit.id : 'new'} onClose={() => { setIsWizardOpen(false); setSystemToEdit(null); setSelectedSystem(null); }} initialData={systemToEdit} />
+          </div>
+        </SlideOver>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      <AIHeader data={data} />
+      
+      <div className="border-b border-slate-200 overflow-x-auto">
+        <nav className="flex space-x-6 min-w-max px-2" aria-label="Tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); if (tab.id !== 'impact') setImpactSystemId(undefined); if (tab.id !== 'data') setDataSystemId(undefined); if (tab.id !== 'providers') setProviderSystemId(undefined); }}
+              className={`
+                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                ${activeTab === tab.id
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                }
+              `}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="mt-6">
+        {activeTab === 'registry' && <AIRegistryTab aiSystems={data.aiSystems || []} setIsWizardOpen={setIsWizardOpen} setSelectedSystem={setSelectedSystem} />}
+        {activeTab === 'impact' && <AIImpactTab data={data} preselectedSystemId={impactSystemId} />}
+        {activeTab === 'lifecycle' && <AILifecycleTab data={data} />}
+        {activeTab === 'data' && <AIDataTab data={data} preselectedSystemId={dataSystemId} />}
+        {activeTab === 'providers' && <AIProvidersTab data={data} preselectedSystemId={providerSystemId} />}
+        {activeTab === 'monitoring' && <AIMonitoringTab data={data} />}
+        {activeTab === 'governance' && <AIGovernanceMapTab data={data} />}
+        {activeTab === 'history' && <AIHistoryTab data={data} />}
+      </div>
 
       <SlideOver
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
-        title="Evaluación Inicial de IA (Screening)"
+        title={systemToEdit ? "Editar Sistema IA" : "Evaluación Inicial de IA (Screening)"}
         description="Completa el cuestionario para registrar y pre-clasificar un nuevo sistema de IA."
       >
         <div className="h-full">
-          <AISystemWizard onClose={() => setIsWizardOpen(false)} />
+          <AISystemWizard key={systemToEdit ? systemToEdit.id : 'new'} onClose={() => { setIsWizardOpen(false); setSystemToEdit(null); }} initialData={systemToEdit} />
         </div>
       </SlideOver>
     </div>

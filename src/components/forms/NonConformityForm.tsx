@@ -12,7 +12,7 @@ interface NonConformityFormProps {
 
 export function NonConformityForm({ onSuccess, onCancel, defaultSource = 'Auditoría' }: NonConformityFormProps) {
   const { addNonConformity, selectedStandard } = useStore();
-  const { currentOrgId, currentUser } = useAuth();
+  const { currentOrgId, user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function NonConformityForm({ onSuccess, onCancel, defaultSource = 'Audito
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrgId || !currentUser) return;
+    if (!currentOrgId || !user) return;
 
     setLoading(true);
     setError(null);
@@ -41,7 +41,7 @@ export function NonConformityForm({ onSuccess, onCancel, defaultSource = 'Audito
         severity: formData.severity,
         status: 'Abierta' as NonConformityStatus,
         identifiedDate: new Date().toISOString(),
-        reportedBy: currentUser.displayName || currentUser.email || 'Sistema',
+        reportedBy: user?.displayName || user?.email || 'Sistema',
         standardIds: formData.standardIds,
         capaIds: []
       };

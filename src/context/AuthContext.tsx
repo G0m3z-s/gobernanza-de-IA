@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
+import { Membership } from '../types';
 
 interface AuthContextType {
   user: User | { uid: string; email: string; displayName: string } | null;
   loading: boolean;
   currentOrgId: string | null;
-  setCurrentOrgId: (orgId: string) => void;
+  setCurrentOrgId: (orgId: string | null) => void;
   mockLogin: () => void;
+  memberships: Membership[];
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,33 +19,42 @@ const AuthContext = createContext<AuthContextType>({
   currentOrgId: null,
   setCurrentOrgId: () => {},
   mockLogin: () => {},
+  memberships: []
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
 
   useEffect(() => {
-    // Check if there's a mock user in localStorage
-    const mockUser = localStorage.getItem('mockUser');
-    if (mockUser) {
-      setUser(JSON.parse(mockUser));
-      setCurrentOrgId('org-nova');
-      setLoading(false);
-      return;
-    }
+    localStorage.removeItem('mockUser');
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        setCurrentOrgId('org-nova');
+        try {
+          const q = query(collection(db, 'memberships'), where('userId', '==', currentUser.uid));
+          const querySnapshot = await getDocs(q);
+          const userMemberships = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Membership));
+          setMemberships(userMemberships);
+          
+          if (userMemberships.length === 1) {
+            setCurrentOrgId(userMemberships[0].organizationId);
+          } else {
+            setCurrentOrgId(null);
+          }
+        } catch (e) {
+          console.error("Error fetching memberships", e);
+          setCurrentOrgId(null);
+        }
       } else {
         setCurrentOrgId(null);
+        setMemberships([]);
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
@@ -58,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, currentOrgId, setCurrentOrgId, mockLogin }}>
+    <AuthContext.Provider value={{ user, loading, currentOrgId, setCurrentOrgId, mockLogin, memberships }}>
       {children}
     </AuthContext.Provider>
   );

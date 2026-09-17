@@ -33,7 +33,7 @@ export function HealthWidgets({ data, standard }: { data: DashboardData, standar
     active: data.aiSystems.filter(a => a.lifecycleStage === 'OPERATION' || a.approvalStatus === 'approved').length,
     withoutImpact: data.aiSystems.filter(s => !impacts.some(i => i.aiSystemId === s.id)).length,
     highImpact: data.aiSystems.filter(s => s.impactLevel === 'high' || s.impactLevel === 'critical').length,
-    incidents: (data.aiIncidents || []).filter(i => i.status !== 'closed' && i.status !== 'resolved').length,
+    incidents: (data.aiIncidents || []).filter(i => i.status !== 'closed' && i.status !== 'contained' && i.status !== 'corrective_action').length,
   };
 
   const auditStats = {

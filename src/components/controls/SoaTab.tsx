@@ -3,8 +3,12 @@ import { DashboardData, NormativeControl } from '../../types';
 import { Search, Filter, ShieldCheck, Check, X, ShieldAlert } from 'lucide-react';
 import { SlideOver } from '../ui/SlideOver';
 import { ControlForm } from '../forms/ControlForm';
+import { SoaTab42001 } from './SoaTab42001';
 
 export function SoaTab({ data, standard }: { data: DashboardData, standard?: string }) {
+  if (standard === 'ISO/IEC 42001') {
+    return <SoaTab42001 data={data} />;
+  }
   const controls = data.normativeControls || [];
   const filteredControls = controls.filter(c => standard === 'Integrado' || c.standard === standard);
   

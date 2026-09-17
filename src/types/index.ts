@@ -1,3 +1,19 @@
+
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  createdAt?: string;
+}
+
+export interface Membership {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: 'super_admin' | 'consultant' | 'organization_admin' | 'sgia_leader' | 'sgsi_leader' | 'process_owner' | 'risk_owner' | 'auditor' | 'approver' | 'collaborator';
+  status: 'active' | 'inactive' | 'pending';
+  createdAt?: string;
+}
 export interface Organization {
   id: string;
   name: string;
@@ -126,12 +142,19 @@ export interface RequirementAssessment {
 
 export interface ControlAssessment {
   id: string;
+  organizationId?: string;
   control: string;
   standard: string;
-  status: 'not_evaluated' | 'gap' | 'planned' | 'documented' | 'implemented' | 'evidenced' | 'verified';
-  evidenceStatus: 'valid' | 'expiring' | 'pending_review' | 'expired' | 'rejected';
-  testResult: 'effective' | 'partially_effective' | 'ineffective' | 'not_tested';
-  process: string;
+  applicability?: 'applicable' | 'not_applicable' | 'not_evaluated';
+  justification?: string;
+  status: 'not_evaluated' | 'gap' | 'planned' | 'documented' | 'implemented' | 'evidenced' | 'verified' | 'not_applicable';
+  evidenceStatus?: 'valid' | 'expiring' | 'pending_review' | 'expired' | 'rejected';
+  testResult?: 'effective' | 'partially_effective' | 'ineffective' | 'not_tested';
+  process?: string;
+  ownerId?: string;
+  notes?: string;
+  lastReviewDate?: string;
+  nextReviewDate?: string;
 }
 
 export interface HealthSnapshot {
@@ -246,6 +269,7 @@ export interface DashboardData {
   aiDataResources?: AIDataResource[];
   aiLifecycleEvents?: AILifecycleEvent[];
   aiIncidents?: AIIncident[];
+  aiMetrics?: AIMetric[];
   aiProviders?: AIProvider[];
   aiHistory?: AIHistory[];
   nonConformities?: NonConformity[];
@@ -495,21 +519,24 @@ export interface AIDataResource {
   aiSystemId: string;
   name: string;
   type?: string;
-  purpose?: string;
   source?: string;
-  sourceOwner?: string;
+  provider?: string;
+  purpose?: string;
   license?: string;
+  personalData?: boolean;
+  sensitiveData?: boolean;
   trainingData?: boolean;
   validationData?: boolean;
   testData?: boolean;
   operationalData?: boolean;
-  personalData?: boolean;
-  sensitiveData?: boolean;
-  location?: string;
-  storageSystem?: string;
+  storageLocation?: string;
+  owner?: string;
+  ownerId?: string;
   qualityStatus?: string;
   lineageStatus?: string;
-  ownerId?: string;
+  lastReview?: string;
+  nextReview?: string;
+  status?: 'active' | 'inactive';
   createdAt?: string;
   updatedAt?: string;
 }
@@ -518,6 +545,7 @@ export interface AILifecycleEvent {
   id: string;
   aiSystemId: string;
   stage: string;
+  previousStage?: string;
   eventType?: string;
   description?: string;
   decision?: string;
@@ -534,20 +562,18 @@ export interface AIIncident {
   id: string;
   organizationId: string;
   aiSystemId: string;
-  category: 'incorrect_output' | 'bias' | 'privacy' | 'security' | 'availability' | 'misuse' | 'provider' | 'data' | 'human_oversight' | 'other';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  category: string;
+  severity: string;
   description: string;
-  detectedAt?: string;
+  date?: string;
   reportedBy?: string;
-  affectedUsers?: string;
+  affectedPeople?: string;
   impact?: string;
+  responsible?: string;
   containment?: string;
-  ownerId?: string;
-  status: 'open' | 'investigating' | 'resolved' | 'closed';
-  rootCause?: string;
-  correctiveActionId?: string;
-  closedAt?: string;
+  status: 'open' | 'investigating' | 'contained' | 'corrective_action' | 'closed';
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AIProvider {
@@ -556,16 +582,20 @@ export interface AIProvider {
   name: string;
   type?: string;
   service?: string;
-  systemsAffected?: string[];
-  contractOwner?: string;
   country?: string;
   dataLocation?: string;
-  subprocessors?: string;
-  riskRating?: string;
-  assessmentStatus?: string;
+  contractOwner?: string;
+  aiSystemIds?: string[];
+  riskLevel?: string;
+  evaluationStatus?: 'pending' | 'approved' | 'restricted' | 'rejected' | 'under_review';
   lastReview?: string;
   nextReview?: string;
-  status?: string;
+  sla?: string;
+  subprocessors?: string;
+  notes?: string;
+  status?: 'active' | 'inactive';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AIHistory {
@@ -580,4 +610,20 @@ export interface AIHistory {
   oldValue?: string;
   newValue?: string;
   comment?: string;
+}
+
+export interface AIMetric {
+  id: string;
+  organizationId: string;
+  aiSystemId: string;
+  name: string;
+  type: 'accuracy' | 'error_rate' | 'hallucination_rate' | 'bias_metric' | 'latency' | 'availability' | 'human_override_rate' | 'complaints' | 'custom' | string;
+  value: number;
+  unit: string;
+  threshold: number;
+  date: string;
+  source: string;
+  responsible: string;
+  breached?: boolean;
+  createdAt?: string;
 }

@@ -1,8 +1,280 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // ==========================================
+    // 1. FUNCIONES AUXILIARES Y MULTI-EMPRESA
+    // ==========================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Para que esta regla funcione, el ID del documento en `memberships` 
+    // DEBE ser el formato: {userId}_{organizationId}
+    function getMembership(orgId) {
+      let docPath = /databases/$(database)/documents/memberships/$(request.auth.uid + '_' + orgId);
+      return exists(docPath) ? get(docPath).data : null;
+    }
+
+    function hasActiveMembership(orgId) {
+      let mem = getMembership(orgId);
+      return mem != null && mem.status == 'active';
+    }
+
+    function getUserRole(orgId) {
+      let mem = getMembership(orgId);
+      return mem != null ? mem.role : 'none';
+    }
+
+    // ==========================================
+    // 2. DEFINICIÓN DE PERMISOS POR ROL
+    // ==========================================
+    
+    function isAdmin(orgId) {
+      let role = getUserRole(orgId);
+      return role == 'super_admin' || role == 'organization_admin';
+    }
+
+    function isSgiaLeader(orgId) {
+      return getUserRole(orgId) == 'sgia_leader';
+    }
+
+    function isAuditor(orgId) {
+      return getUserRole(orgId) == 'auditor';
+    }
+    
+    function canWriteAI(orgId) {
+      return isAdmin(orgId) || isSgiaLeader(orgId);
+    }
+
+    function canWriteAudit(orgId) {
+      return isAdmin(orgId) || isAuditor(orgId);
+    }
+
+    function canWriteOperational(orgId) {
+      return hasActiveMembership(orgId);
+    }
+
+    // ==========================================
+    // 3. REGLAS BASE
+    // ==========================================
+    
     match /{document=**} {
-      allow read, write: if true; // Temporarily open for demo purposes
+      allow read, write: if false; 
+    }
+
+    match /organizations/{orgId} {
+      allow read: if isSignedIn() && hasActiveMembership(orgId);
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isSignedIn() && isAdmin(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isSignedIn() && isAdmin(orgId);
+    }
+
+    match /memberships/{membershipId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin(resource.data.organizationId)
+      );
+      
+      allow create: if isSignedIn() && (
+        // Bootstrap: Creator of the org creates their first membership as admin
+        (
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.role == 'organization_admin' &&
+          request.resource.data.status == 'active' &&
+          membershipId == request.auth.uid + '_' + request.resource.data.organizationId &&
+          exists(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)) &&
+          get(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)).data.createdBy == request.auth.uid
+        ) ||
+        // Admin creates membership for others
+        (
+          isAdmin(request.resource.data.organizationId) &&
+          membershipId == request.resource.data.userId + '_' + request.resource.data.organizationId
+        )
+      );
+      
+      allow update: if isSignedIn() && 
+                    isAdmin(resource.data.organizationId) && 
+                    request.resource.data.organizationId == resource.data.organizationId &&
+                    request.resource.data.userId == resource.data.userId &&
+                    resource.data.userId != request.auth.uid; // Can't change own membership
+                    
+      allow delete: if isSignedIn() && 
+                    isAdmin(resource.data.organizationId) && 
+                    resource.data.userId != request.auth.uid; // Can't delete own membership
+    }
+
+    // ==========================================
+    // 4. MÓDULOS DE APLICACIÓN
+    // ==========================================
+
+    // Grupo: AI
+    match /aiSystems/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiImpactAssessments/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiLifecycleEvents/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiDataResources/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiProviders/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiMetrics/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiIncidents/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+    match /aiHistory/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAI(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAI(resource.data.organizationId);
+    }
+
+    // Grupo: AUDIT
+    match /auditSessions/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAudit(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAudit(resource.data.organizationId);
+    }
+    match /auditItems/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteAudit(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteAudit(resource.data.organizationId);
+    }
+
+    // Grupo: CORE
+    match /processes/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /risks/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /alerts/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /objectives/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /indicators/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /indicatorMeasurements/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /nonConformities/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /capas/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /normativeControls/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /governanceRoles/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+    match /stakeholders/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && isAdmin(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && isAdmin(resource.data.organizationId);
+    }
+
+    // Grupo: OPERATIONAL
+    match /activityLogs/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /healthSnapshots/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /processInputs/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /processOutputs/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /processActivities/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /processDependencies/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /processHistory/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /assessmentHistory/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /implementationActions/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /requirementAssessments/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
+    }
+    match /controlAssessments/{docId} {
+      allow read: if isSignedIn() && resource.data.organizationId != null && hasActiveMembership(resource.data.organizationId);
+      allow create: if isSignedIn() && request.resource.data.organizationId != null && canWriteOperational(request.resource.data.organizationId);
+      allow update, delete: if isSignedIn() && resource.data.organizationId != null && canWriteOperational(resource.data.organizationId);
     }
   }
 }

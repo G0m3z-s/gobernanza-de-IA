@@ -14,6 +14,7 @@ import { Performance } from './pages/Performance';
 import { ControlCenter } from './pages/ControlCenter';
 import { AuditWorkspace } from './pages/AuditWorkspace';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { OrganizationSelector } from './pages/OrganizationSelector';
 
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-center">
@@ -28,7 +29,7 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 );
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, currentOrgId } = useAuth();
   
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div></div>;
@@ -36,6 +37,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // If user is authenticated but hasn't selected an org yet
+  // we check if they are in the mock mode which forces currentOrgId to 'org-nova'
+  if (!currentOrgId) {
+    return <OrganizationSelector />;
   }
   
   return <Layout>{children}</Layout>;

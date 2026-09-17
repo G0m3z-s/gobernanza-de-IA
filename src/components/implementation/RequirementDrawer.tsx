@@ -18,6 +18,7 @@ export function RequirementDrawer({ requirement, onClose, onRefresh }: { require
 
   const [status, setStatus] = useState(requirement.status || 'not_evaluated');
   const [ownerId, setOwnerId] = useState(requirement.ownerId || 'Sin asignar');
+  const [justification, setJustification] = useState(requirement.justification || '');
   const [saving, setSaving] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
 
@@ -27,33 +28,48 @@ export function RequirementDrawer({ requirement, onClose, onRefresh }: { require
     if (!currentOrgId) return;
     setSaving(true);
     try {
-      const assessmentRef = requirement.assessmentId 
-        ? doc(db, 'requirementAssessments', requirement.assessmentId)
-        : doc(collection(db, 'requirementAssessments'));
-      
-      const newData = {
-        organizationId: currentOrgId,
-        standard: requirement.standard,
-        clause: requirement.clause,
-        requirementId: requirement.requirement,
-        status,
-        ownerId,
-        updatedAt: new Date().toISOString()
-      };
+            const isControl = requirement.type === 'control';
+      const collectionName = isControl ? 'controlAssessments' : 'requirementAssessments';
 
+      const assessmentRef = requirement.assessmentId 
+         ? doc(db, collectionName, requirement.assessmentId)
+        : doc(collection(db, collectionName));
+            
+      const newData = isControl
+        ? {
+            organizationId: currentOrgId,
+            standard: requirement.standard,
+            clause: requirement.clause,
+            control: requirement.requirement,
+            status,
+            ownerId,
+            justification: status === 'not_applicable' ? justification : null,
+            updatedAt: new Date().toISOString()
+          }
+        : {
+            organizationId: currentOrgId,
+            standard: requirement.standard,
+            clause: requirement.clause,
+            requirementId: requirement.requirement,
+            status,
+            ownerId,
+            justification: status === 'not_applicable' ? justification : null,
+            updatedAt: new Date().toISOString()
+          };
       await setDoc(assessmentRef, newData, { merge: true });
 
       // Record history
-      if (requirement.status !== status || requirement.ownerId !== ownerId) {
+      if (requirement.status !== status || requirement.ownerId !== ownerId || requirement.justification !== justification) {
         await addDoc(collection(db, 'assessmentHistory'), {
           organizationId: currentOrgId,
           requirementId: requirement.requirement,
           date: new Date().toISOString(),
           userId: user?.uid || 'unknown',
           userName: user?.displayName || user?.email || 'Unknown User',
-          field: requirement.status !== status ? 'status' : 'ownerId',
-          oldValue: requirement.status !== status ? requirement.status : requirement.ownerId,
-          newValue: requirement.status !== status ? status : ownerId,
+          field: requirement.status !== status ? 'status' : (requirement.ownerId !== ownerId ? 'ownerId' : 'justification'),
+          oldValue: requirement.status !== status ? requirement.status : (requirement.ownerId !== ownerId ? requirement.ownerId : requirement.justification),
+          newValue: requirement.status !== status ? status : (requirement.ownerId !== ownerId ? ownerId : justification),
+          type: requirement.type || 'requirement'
         });
       }
 
@@ -86,7 +102,35 @@ export function RequirementDrawer({ requirement, onClose, onRefresh }: { require
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
             <h3 className="text-sm font-semibold text-slate-800 mb-2">¿QUÉ SIGNIFICA?</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">{requirement.description || requirement.title}</p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">{requirement.summary || requirement.description || requirement.title}</p>
+              </div>
+              {requirement.objective && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Objetivo</h4>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{requirement.objective}</p>
+                </div>
+              )}
+              {requirement.implementationGuidance && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Guía de Implementación</h4>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{requirement.implementationGuidance}</p>
+                </div>
+              )}
+              {requirement.evidenceGuidance && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Evidencia Sugerida</h4>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{requirement.evidenceGuidance}</p>
+                </div>
+              )}
+              {requirement.auditQuestion && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pregunta de Auditoría</h4>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{requirement.auditQuestion}</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-5 border border-teal-100">
@@ -148,6 +192,19 @@ export function RequirementDrawer({ requirement, onClose, onRefresh }: { require
                   <option value="not_applicable">No aplica</option>
                 </select>
               </div>
+
+              {status === 'not_applicable' && (
+                <div className="col-span-2 mt-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Justificación (Requerida)</label>
+                  <textarea
+                    value={justification}
+                    onChange={(e) => setJustification(e.target.value)}
+                    placeholder="Indique por qué este control no es aplicable..."
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[80px]"
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Responsable</label>
                 <select 

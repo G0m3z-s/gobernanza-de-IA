@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { DashboardData } from '../../types';
 import { ShieldAlert, Plus } from 'lucide-react';
+import { SlideOver } from '../ui/SlideOver';
+import { AIImpactWizard } from './AIImpactWizard';
 
-export function AIImpactTab({ data }: { data: DashboardData }) {
+export function AIImpactTab({ data, preselectedSystemId }: { data: DashboardData, preselectedSystemId?: string }) {
+  const [isWizardOpen, setIsWizardOpen] = useState(!!preselectedSystemId);
+  const [assessmentToEdit, setAssessmentToEdit] = useState<any>(null);
   const impacts = data.aiImpactAssessments || [];
   const aiSystems = data.aiSystems || [];
 
@@ -14,7 +18,7 @@ export function AIImpactTab({ data }: { data: DashboardData }) {
           <p className="text-sm text-slate-500">Evaluación de impactos sobre personas, grupos y sociedad.</p>
         </div>
         
-        <button className="flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">
+        <button onClick={() => { setAssessmentToEdit(null); setIsWizardOpen(true); }} className="flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">
           <Plus className="w-4 h-4 mr-2" />
           NUEVA EVALUACIÓN
         </button>
@@ -25,14 +29,14 @@ export function AIImpactTab({ data }: { data: DashboardData }) {
           <div className="text-center py-12">
             <ShieldAlert className="w-8 h-8 text-slate-300 mx-auto mb-4" />
             <p className="text-sm text-slate-500 mb-4">No hay evaluaciones de impacto registradas.</p>
-            <button className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg">INICIAR EVALUACIÓN</button>
+            <button onClick={() => { setAssessmentToEdit(null); setIsWizardOpen(true); }} className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800">INICIAR EVALUACIÓN</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {impacts.map(imp => {
               const sys = aiSystems.find(s => s.id === imp.aiSystemId);
               return (
-                <div key={imp.id} className="border border-slate-200 rounded-xl p-4 bg-slate-50 hover:border-teal-300 transition-colors cursor-pointer">
+                <div key={imp.id} onClick={() => { setAssessmentToEdit(imp); setIsWizardOpen(true); }} className="border border-slate-200 rounded-xl p-4 bg-slate-50 hover:border-teal-300 transition-colors cursor-pointer">
                   <div className="flex justify-between items-start mb-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700 uppercase">
                       {imp.status || 'Completada'}
@@ -57,6 +61,21 @@ export function AIImpactTab({ data }: { data: DashboardData }) {
           </div>
         )}
       </div>
+      <SlideOver
+        isOpen={isWizardOpen}
+        onClose={() => { setIsWizardOpen(false); setAssessmentToEdit(null); }}
+        title={assessmentToEdit ? "Editar Evaluación de Impacto" : "Nueva Evaluación de Impacto (AIA)"}
+        description="Completa las dimensiones, salvaguardas y probabilidades de impacto."
+      >
+        <div className="h-full">
+          <AIImpactWizard 
+            key={assessmentToEdit ? assessmentToEdit.id : 'new'} 
+            onClose={() => { setIsWizardOpen(false); setAssessmentToEdit(null); }} 
+            initialData={assessmentToEdit} 
+            systemId={preselectedSystemId}
+          />
+        </div>
+      </SlideOver>
     </div>
   );
 }
