@@ -1,6 +1,6 @@
 import React from 'react';
 import { DashboardData } from '../../types';
-import { ShieldCheck, BarChart3, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../ui/PageHeader';
 
 export function ControlHeader({ data, filters, setFilters }: { data: DashboardData, filters: any, setFilters: any }) {
   const controls = data.normativeControls || [];
@@ -16,63 +16,59 @@ export function ControlHeader({ data, filters, setFilters }: { data: DashboardDa
     ? Math.round((implementedControls / applicableControls) * 100) 
     : 0;
 
+  const standardSelector = (
+    <select 
+      className="bg-white border border-[var(--border)] text-[var(--text-primary)] rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)] text-xs font-medium"
+      value={filters.standard}
+      onChange={(e) => setFilters({...filters, standard: e.target.value})}
+    >
+      <option value="Integrado">Integrado (27001 + 42001)</option>
+      <option value="ISO/IEC 27001">ISO/IEC 27001:2022</option>
+      <option value="ISO/IEC 42001">ISO/IEC 42001:2023</option>
+    </select>
+  );
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Control Center & SOA</h1>
-          <p className="text-sm text-slate-500 mt-1">Declaración de Aplicabilidad, implementación y nivel de madurez de controles.</p>
+    <div className="mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+        <div className="flex-1">
+          <PageHeader 
+            title="Control Center"
+            description="Gestión de aplicabilidad, implementación, evidencia y eficacia de controles ISO/IEC 42001."
+          />
         </div>
-        
-        <div className="flex items-center space-x-3">
-          <select 
-            className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-medium"
-            value={filters.standard}
-            onChange={(e) => setFilters({...filters, standard: e.target.value})}
-          >
-            <option value="Integrado">Integrado (27001 + 42001)</option>
-            <option value="ISO/IEC 27001">ISO/IEC 27001:2022</option>
-            <option value="ISO/IEC 42001">ISO/IEC 42001:2023</option>
-          </select>
+        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          {standardSelector}
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Total Controles</p>
-            <p className="text-lg font-bold text-slate-900">{totalControls}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-1">
+            Total Controles
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{totalControls}</span>
+        </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 mb-1">
+            Controles Aplicables
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{applicableControls}</span>
+        </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 mb-1">
+            Implementados
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold text-[var(--text-primary)]">{implementedControls}</span>
+            <span className="text-xs text-[var(--text-secondary)]">({implementationPercentage}%)</span>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Controles Aplicables</p>
-            <p className="text-lg font-bold text-blue-700">{applicableControls}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <BarChart3 className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Implementados</p>
-            <p className="text-lg font-bold text-emerald-700">{implementedControls} ({implementationPercentage}%)</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-            <AlertCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">En Proceso</p>
-            <p className="text-lg font-bold text-amber-700">{inProgressControls}</p>
-          </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 mb-1">
+            En Proceso
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{inProgressControls}</span>
         </div>
       </div>
     </div>

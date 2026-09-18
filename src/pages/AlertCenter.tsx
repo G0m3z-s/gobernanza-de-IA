@@ -5,13 +5,19 @@ import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-rea
 import { AlertDetailsSlideOver } from '../components/ui/AlertDetailsSlideOver';
 
 export function AlertCenter() {
-  const { data, fetchData, loading } = useStore();
+  const { data, fetchData, loading , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
   useEffect(() => {
-    if (currentOrgId) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (loading || !data) return <div className="flex items-center justify-center h-full"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div><p className="mt-4 text-slate-500 font-medium">Cargando Alertas...</p></div></div>;
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { useAuth } from '../../context/AuthContext';
 import { AlertCircle } from 'lucide-react';
+import { FormSection } from '../ui/FormSection';
 
 interface CAPAFormProps {
   onSuccess: () => void;
@@ -22,7 +23,7 @@ export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProp
     type: 'Correctiva',
     nonConformityId: defaultNcId,
     dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days from now
-    ownerId: user?.displayName || user?.email || 'Sistema',
+    ownerId: user.uid,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +36,8 @@ export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProp
     try {
       const capa = {
         organizationId: currentOrgId,
+        controlId: (data?.nonConformities || []).find((nc: any) => nc.id === formData.nonConformityId)?.controlId || undefined,
+        effectivenessTestId: (data?.nonConformities || []).find((nc: any) => nc.id === formData.nonConformityId)?.sourceId || undefined,
         title: formData.title,
         description: formData.description,
         type: formData.type,
@@ -42,6 +45,7 @@ export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProp
         nonConformityId: formData.nonConformityId || null,
         ownerId: formData.ownerId,
         dueDate: new Date(formData.dueDate).toISOString(),
+        createdBy: user.uid,
       };
 
       await addCapa(capa);
@@ -57,121 +61,125 @@ export function CAPAForm({ onSuccess, onCancel, defaultNcId = '' }: CAPAFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start space-x-3">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded flex items-start space-x-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <p className="text-sm">{error}</p>
         </div>
       )}
 
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
-          Título de la Acción *
-        </label>
-        <input
-          type="text"
-          id="title"
-          required
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          placeholder="Ej: Actualizar política de control de accesos"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">
-          Plan de Acción Detallado *
-        </label>
-        <textarea
-          id="description"
-          required
-          rows={3}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          placeholder="Describe los pasos exactos para implementar esta acción y prevenir recurrencia."
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <FormSection title="Plan de Acción" description="Defina la acción correctiva o preventiva a tomar.">
         <div>
-          <label htmlFor="type" className="block text-sm font-medium text-slate-700 mb-1">
-            Tipo de Acción
+          <label htmlFor="title" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+            Título de la Acción <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="title"
+            required
+            className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none"
+            placeholder="Ej: Actualizar política de control de accesos"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+            Plan de Acción Detallado <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            required
+            rows={3}
+            className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none"
+            placeholder="Describe los pasos exactos para implementar esta acción y prevenir recurrencia."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+              Tipo de Acción
+            </label>
+            <select
+              id="type"
+              className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none bg-white"
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
+              <option value="Correctiva">Correctiva (Eliminar causa raíz)</option>
+              <option value="Preventiva">Preventiva (Evitar que ocurra)</option>
+              <option value="Mejora">Mejora (Optimización)</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="dueDate" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+              Fecha Límite
+            </label>
+            <input
+              type="date"
+              id="dueDate"
+              required
+              className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none bg-white"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+            />
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection title="Asignación y Trazabilidad" description="Relacione esta acción con una no conformidad y asigne un responsable.">
+        <div>
+          <label htmlFor="nonConformityId" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+            Asociar a No Conformidad (Opcional)
           </label>
           <select
-            id="type"
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            id="nonConformityId"
+            className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none bg-white"
+            value={formData.nonConformityId}
+            onChange={(e) => setFormData({ ...formData, nonConformityId: e.target.value })}
           >
-            <option value="Correctiva">Correctiva (Eliminar causa raíz)</option>
-            <option value="Preventiva">Preventiva (Evitar que ocurra)</option>
-            <option value="Mejora">Mejora (Optimización)</option>
+            <option value="">-- Sin asociar --</option>
+            {openNcs.map(nc => (
+              <option key={nc.id} value={nc.id}>
+                {nc.title} ({nc.status})
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
-          <label htmlFor="dueDate" className="block text-sm font-medium text-slate-700 mb-1">
-            Fecha Límite
+          <label htmlFor="ownerId" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+            Responsable <span className="text-red-500">*</span>
           </label>
           <input
-            type="date"
-            id="dueDate"
+            type="text"
+            id="ownerId"
             required
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+            className="w-full px-3 py-2 border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--brand-accent)] focus:outline-none"
+            value={formData.ownerId}
+            onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
           />
         </div>
-      </div>
-
-      <div>
-        <label htmlFor="nonConformityId" className="block text-sm font-medium text-slate-700 mb-1">
-          Asociar a No Conformidad (Opcional)
-        </label>
-        <select
-          id="nonConformityId"
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-          value={formData.nonConformityId}
-          onChange={(e) => setFormData({ ...formData, nonConformityId: e.target.value })}
-        >
-          <option value="">-- Sin asociar --</option>
-          {openNcs.map(nc => (
-            <option key={nc.id} value={nc.id}>
-              {nc.title} ({nc.status})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="ownerId" className="block text-sm font-medium text-slate-700 mb-1">
-          Responsable
-        </label>
-        <input
-          type="text"
-          id="ownerId"
-          required
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          value={formData.ownerId}
-          onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
-        />
-      </div>
+      </FormSection>
 
       {/* Buttons */}
-      <div className="pt-6 border-t border-slate-200 flex items-center justify-end space-x-4">
+      <div className="pt-6 border-t border-[var(--border)] flex items-center justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] bg-white border border-[var(--border)] rounded hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+          className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-[var(--brand-navy)] rounded hover:bg-[var(--brand-navy)]/90 focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)] disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center">

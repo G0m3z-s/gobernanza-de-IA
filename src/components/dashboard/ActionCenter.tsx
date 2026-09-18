@@ -67,11 +67,12 @@ export function ActionCenter({ data }: { data: DashboardData }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col h-full">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-        <AlertTriangle className="w-5 h-5 mr-2 text-rose-500" />
-        Action Center
-      </h2>
+    <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4 border-b border-[var(--border)] pb-3">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] flex items-center uppercase tracking-wider">
+          Prioridades Operativas
+        </h2>
+      </div>
       
       {priorities.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
@@ -80,14 +81,14 @@ export function ActionCenter({ data }: { data: DashboardData }) {
       ) : (
         <div className="space-y-3 overflow-y-auto pr-2 flex-1">
           {priorities.slice(0, 6).map((p, i) => (
-            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors group">
+            <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer group transition-colors px-2 -mx-2 rounded">
               <div className="flex items-start">
-                <div className={`w-10 h-10 rounded-lg ${p.bg} ${p.color} flex items-center justify-center mr-3 shrink-0`}>
+                <div className={`w-8 h-8 rounded ${p.bg} ${p.color} flex items-center justify-center mr-3 shrink-0`}>
                   <p.icon className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center mb-0.5">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${p.bg} ${p.color} mr-2`}>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-[var(--border)] text-slate-600 mr-2`}>
                       {p.action}
                     </span>
                     <span className="text-xs text-slate-400 font-medium">{p.date}</span>

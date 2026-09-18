@@ -10,22 +10,23 @@ import { twMerge } from 'tailwind-merge';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import { BrandMark } from './brand/BrandMark';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 const menuItems = [
-  { label: 'COMMAND CENTER', icon: LayoutDashboard, path: '/' },
-  { label: 'IMPLEMENTACIÓN', icon: Map, path: '/implementation' },
-  { label: 'GOBERNANZA', icon: Target, path: '/governance' },
-  { label: 'INTELIGENCIA ARTIFICIAL', icon: Cpu, path: '/ai-registry' },
-  { label: 'RIESGOS', icon: ShieldAlert, path: '/risks' },
-  { label: 'CONTROLES', icon: CheckSquare, path: '/controls' },
-  { label: 'EVIDENCIAS', icon: FileBox, path: '/evidences' },
-  { label: 'DOCUMENTOS', icon: Files, path: '/documents' },
-  { label: 'AUDITORÍA', icon: Search, path: '/audit' },
-  { label: 'DESEMPEÑO', icon: Activity, path: '/performance' },
+  { label: 'Command Center', icon: LayoutDashboard, path: '/' },
+  { label: 'Implementación', icon: Map, path: '/implementation' },
+  { label: 'Gobernanza', icon: Target, path: '/governance' },
+  { label: 'Inteligencia Artificial', icon: Cpu, path: '/ai-registry' },
+  { label: 'Riesgos', icon: ShieldAlert, path: '/risks' },
+  { label: 'Controles', icon: CheckSquare, path: '/controls' },
+  { label: 'Evidencias', icon: FileBox, path: '/evidences' },
+  { label: 'Documentos', icon: Files, path: '/documents' },
+  { label: 'Auditoría', icon: Search, path: '/audit' },
+  { label: 'Desempeño', icon: Activity, path: '/performance' },
 ];
 
 export function Sidebar() {
@@ -33,15 +34,16 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    localStorage.removeItem('mockUser'); await signOut(auth);
+    localStorage.removeItem('mockUser');
+    await signOut(auth);
     navigate('/login');
   };
 
   return (
-    <div className="w-64 bg-slate-900 text-slate-300 h-screen flex flex-col border-r border-slate-800 shrink-0">
-      <div className="h-16 flex items-center px-6 border-b border-slate-800">
-        <Cpu className="w-6 h-6 text-teal-400 mr-2" />
-        <span className="font-bold text-lg text-white tracking-wide">AIGobernanza <span className="text-teal-400">360</span></span>
+    <div className="w-60 bg-[var(--brand-navy)] text-slate-300 h-screen flex flex-col shrink-0">
+      <div className="h-16 flex items-center px-6 border-b border-white/10 shrink-0">
+        <BrandMark className="w-6 h-6 text-[var(--brand-accent)] mr-2 shrink-0" />
+        <span className="font-semibold text-lg text-white tracking-tight">AIGobernanza <span className="text-[var(--brand-accent)] font-light">360</span></span>
       </div>
       
       <div className="flex-1 overflow-y-auto py-4 space-y-1 px-3">
@@ -50,36 +52,35 @@ export function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) => cn(
-              "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
+              "flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 border-l-2",
               isActive 
-                ? "bg-slate-800 text-teal-400" 
-                : "hover:bg-slate-800/50 hover:text-white"
+                 ? "bg-white/5 text-white border-[var(--brand-accent)]" 
+                 : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white"
             )}
           >
             <item.icon className="w-5 h-5 mr-3 shrink-0" />
             {item.label}
           </NavLink>
         ))}
-
-        <div className="mt-8 pt-4 border-t border-slate-800 space-y-1">
-          <NavLink to="/reports" className="flex items-center px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-colors duration-200">
-            <BarChart2 className="w-5 h-5 mr-3 shrink-0" /> REPORTES
+        <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
+          <NavLink to="/reports" className={({ isActive }) => cn("flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 border-l-2", isActive ? "bg-white/5 text-white border-[var(--brand-accent)]" : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white")}>
+            <BarChart2 className="w-5 h-5 mr-3 shrink-0" /> Reportes
           </NavLink>
-          <NavLink to="/calendar" className="flex items-center px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-colors duration-200">
-            <Calendar className="w-5 h-5 mr-3 shrink-0" /> CALENDARIO
+          <NavLink to="/calendar" className={({ isActive }) => cn("flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 border-l-2", isActive ? "bg-white/5 text-white border-[var(--brand-accent)]" : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white")}>
+            <Calendar className="w-5 h-5 mr-3 shrink-0" /> Calendario
           </NavLink>
-          <NavLink to="/alerts" className="flex items-center px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-colors duration-200">
-            <Bell className="w-5 h-5 mr-3 shrink-0" /> ALERTAS
+          <NavLink to="/alerts" className={({ isActive }) => cn("flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 border-l-2", isActive ? "bg-white/5 text-white border-[var(--brand-accent)]" : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white")}>
+            <Bell className="w-5 h-5 mr-3 shrink-0" /> Alertas
           </NavLink>
-          <NavLink to="/settings" className="flex items-center px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-colors duration-200">
-            <Settings className="w-5 h-5 mr-3 shrink-0" /> CONFIGURACIÓN
+          <NavLink to="/settings" className={({ isActive }) => cn("flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 border-l-2", isActive ? "bg-white/5 text-white border-[var(--brand-accent)]" : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white")}>
+            <Settings className="w-5 h-5 mr-3 shrink-0" /> Configuración
           </NavLink>
         </div>
       </div>
       
-      <div className="p-4 border-t border-slate-800 flex justify-between items-center">
+      <div className="p-4 border-t border-white/10 flex justify-between items-center bg-black/10">
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white uppercase">
+          <div className="w-8 h-8 rounded bg-[var(--brand-navy-hover)] flex items-center justify-center text-sm font-bold text-white uppercase">
             {user?.email?.charAt(0) || 'U'}
           </div>
           <div className="ml-3 truncate max-w-[120px]">
@@ -88,7 +89,7 @@ export function Sidebar() {
           </div>
         </div>
         <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors p-1" title="Cerrar sesión">
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </div>

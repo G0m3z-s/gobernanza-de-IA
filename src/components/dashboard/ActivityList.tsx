@@ -8,9 +8,9 @@ export function ActivityList({ data }: { data: DashboardData }) {
   const activities = data.activityLogs.slice(0, 8);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-slate-800 flex items-center">
+    <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4 border-b border-[var(--border)] pb-3">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] flex items-center uppercase tracking-wider">
           <History className="w-5 h-5 mr-2 text-slate-400" />
           Actividad Reciente
         </h2>
@@ -38,8 +38,8 @@ export function ActivityList({ data }: { data: DashboardData }) {
         </div>
       )}
       
-      <button onClick={() => alert("El historial de actividades completas se encuentra en desarrollo para la siguiente versión.")} className="w-full mt-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors border border-transparent hover:border-teal-100">
-        VER HISTORIAL COMPLETO
+      <button disabled={true} className="w-full mt-4 py-2 text-xs font-medium text-[var(--brand-accent)] hover:text-[var(--brand-accent-hover)] transition-colors opacity-50 cursor-not-allowed">
+        HISTORIAL COMPLETO (PRÓXIMAMENTE)
       </button>
     </div>
   );

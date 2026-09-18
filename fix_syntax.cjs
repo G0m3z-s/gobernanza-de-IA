@@ -1,9 +1,10 @@
 const fs = require('fs');
+let content = fs.readFileSync('src/store/useStore.ts', 'utf8');
 
-const catalogPath = './src/data/normativeCatalog.ts';
-let catalog = fs.readFileSync(catalogPath, 'utf8');
+content = content.replace(
+  /\}\);\n\s*\}\)\);\n\s*\}\)\);/,
+  `});\n        }\n      }));`
+);
 
-catalog = catalog.replace(/\];\n\];\n/, '];\n');
-catalog = catalog.replace(/\];\n\];/, '];\n');
-
-fs.writeFileSync(catalogPath, catalog);
+fs.writeFileSync('src/store/useStore.ts', content);
+console.log("Fixed syntax");

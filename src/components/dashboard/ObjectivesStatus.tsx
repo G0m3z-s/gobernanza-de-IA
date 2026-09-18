@@ -16,15 +16,13 @@ export function ObjectivesStatus({ data }: { data: DashboardData }) {
   const total = objectives.length;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-full">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 border-b border-[var(--border)] pb-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">Estado de los Objetivos</h2>
-          <p className="text-sm text-slate-500">Métricas y cumplimiento</p>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Estado de los Objetivos</h2>
+          
         </div>
-        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-          <Target className="w-5 h-5 text-indigo-600" />
-        </div>
+        
       </div>
 
       {total === 0 ? (
@@ -34,31 +32,31 @@ export function ObjectivesStatus({ data }: { data: DashboardData }) {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+          <div className="flex justify-between items-center p-3 bg-white rounded border border-slate-200">
             <div className="flex items-center">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 mr-3" />
-              <span className="text-sm font-medium text-emerald-800">Completados / En Vía</span>
+              <span className="text-sm font-medium text-slate-700">Completados / En Vía</span>
             </div>
-            <span className="text-lg font-bold text-emerald-700">{statusCounts.completed + statusCounts.on_track}</span>
+            <span className="text-lg font-bold text-emerald-600">{statusCounts.completed + statusCounts.on_track}</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg border border-amber-100">
+          <div className="flex justify-between items-center p-3 bg-white rounded border border-slate-200">
             <div className="flex items-center">
               <AlertTriangle className="w-5 h-5 text-amber-600 mr-3" />
-              <span className="text-sm font-medium text-amber-800">En Riesgo</span>
+              <span className="text-sm font-medium text-slate-700">En Riesgo</span>
             </div>
-            <span className="text-lg font-bold text-amber-700">{statusCounts.at_risk}</span>
+            <span className="text-lg font-bold text-amber-600">{statusCounts.at_risk}</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 bg-rose-50 rounded-lg border border-rose-100">
+          <div className="flex justify-between items-center p-3 bg-white rounded border border-slate-200">
             <div className="flex items-center">
               <XCircle className="w-5 h-5 text-rose-600 mr-3" />
-              <span className="text-sm font-medium text-rose-800">Desviados</span>
+              <span className="text-sm font-medium text-slate-700">Desviados</span>
             </div>
-            <span className="text-lg font-bold text-rose-700">{statusCounts.off_track}</span>
+            <span className="text-lg font-bold text-rose-600">{statusCounts.off_track}</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex justify-between items-center p-3 bg-white rounded border border-slate-200">
             <div className="flex items-center">
               <Clock className="w-5 h-5 text-slate-500 mr-3" />
               <span className="text-sm font-medium text-slate-700">En Planificación (Draft/Activo)</span>

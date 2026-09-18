@@ -145,7 +145,7 @@ function AIRegistryTab({ aiSystems, setIsWizardOpen, setSelectedSystem }: { aiSy
 }
 
 export function AIRegistry() {
-  const { data, fetchData, loading, error } = useStore();
+  const { data, fetchData, loading, error , clearData} = useStore();
   const { currentOrgId } = useAuth();
   
   const [activeTab, setActiveTab] = useState('registry');
@@ -157,8 +157,14 @@ export function AIRegistry() {
   const [systemToEdit, setSystemToEdit] = useState<any>(null);
 
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId, data]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (loading || !data) return (
     <div className="flex items-center justify-center h-full">

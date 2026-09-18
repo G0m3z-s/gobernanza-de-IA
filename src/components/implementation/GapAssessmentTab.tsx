@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardData } from '../../types';
 import { normativeCatalog as legacyCatalog } from '../../data/catalog';
-import { getISO42001AdaptedCatalog, getISO42001AdaptedControls } from '../../data/normativeCatalogAdapter';
+import { getISO42001AdaptedCatalog, getISO42001AdaptedControls, getControlApplicability, getControlImplementationStatus } from '../../data/normativeCatalogAdapter';
 import { Search, Filter, AlertCircle } from 'lucide-react';
 import { RequirementDrawer } from './RequirementDrawer';
 
@@ -76,7 +76,9 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
     return {
       ...catReq,
       requirement: resolvedAssessmentId,
-      status: assessment ? assessment.status : 'not_evaluated',
+      status: isNewControl ? (getControlApplicability(assessment) === 'not_applicable' ? 'not_applicable' : getControlImplementationStatus(assessment)) : (assessment ? assessment.status : 'not_evaluated'),
+      realStatus: isNewControl ? getControlImplementationStatus(assessment) : undefined,
+      applicability: isNewControl ? getControlApplicability(assessment) : 'applicable',
       assessmentId: assessment?.id,
       justification: (assessment as any)?.justification || ''
     };
@@ -152,8 +154,8 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
                   <td className="px-4 py-3 text-slate-800 font-semibold">{(req as any).code || req.requirement}</td>
                   <td className="px-4 py-3 text-slate-700 truncate max-w-md" title={req.title}>{req.title}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[req.status] || statusColors.not_evaluated}`}>
-                      {statusLabels[req.status] || 'No evaluado'}
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${req.applicability === 'not_applicable' ? statusColors.not_applicable : (statusColors[req.status] || statusColors.not_evaluated)}`}>
+                      {req.applicability === 'not_applicable' ? 'No aplica' : (statusLabels[req.status] || 'No evaluado')}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -176,8 +178,8 @@ export function GapAssessmentTab({ data, standard, onRefresh }: { data: Dashboar
             <div key={i} onClick={() => setSelectedReq(req)} className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer flex flex-col h-full">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{req.standard.split(' ')[1]} • {(req as any).code || req.requirement}</span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[req.status] || statusColors.not_evaluated}`}>
-                  {statusLabels[req.status] || 'No evaluado'}
+                <span className={`px-2 py-1 rounded text-xs font-medium ${req.applicability === 'not_applicable' ? statusColors.not_applicable : (statusColors[req.status] || statusColors.not_evaluated)}`}>
+                  {req.applicability === 'not_applicable' ? 'No aplica' : (statusLabels[req.status] || 'No evaluado')}
                 </span>
               </div>
               <h3 className="text-sm font-semibold text-slate-800 mb-2">{req.title}</h3>

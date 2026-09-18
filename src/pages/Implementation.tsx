@@ -12,7 +12,7 @@ import { EvolutionTab } from '../components/implementation/EvolutionTab';
 type Tab = 'roadmap' | 'gap' | 'plan' | 'evolution';
 
 export function Implementation() {
-  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard } = useStore();
+  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('roadmap');
   
@@ -35,8 +35,14 @@ export function Implementation() {
   }, [selectedStandard]);
 
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (error) {
     return (

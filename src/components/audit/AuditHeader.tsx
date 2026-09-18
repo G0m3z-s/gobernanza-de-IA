@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DashboardData } from '../../types';
-import { CalendarDays, AlertTriangle, CheckCircle2, ClipboardCheck, Sparkles } from 'lucide-react';
-import { AIAssistantDrawer } from '../ai/AIAssistantDrawer';
+import { PageHeader } from '../ui/PageHeader';
 
 export function AuditHeader({ data, filters, setFilters }: { data: DashboardData, filters: any, setFilters: any }) {
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const sessions = data.auditSessions || [];
   const nonConformities = data.nonConformities || [];
   
@@ -20,77 +18,59 @@ export function AuditHeader({ data, filters, setFilters }: { data: DashboardData
   
   const openFindings = auditFindings.filter(nc => nc.status !== 'Cerrada').length;
 
+  const standardSelector = (
+    <select 
+      className="bg-white border border-[var(--border)] text-[var(--text-primary)] rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)] text-xs font-medium"
+      value={filters.standard}
+      onChange={(e) => setFilters({...filters, standard: e.target.value})}
+    >
+      <option value="Integrado">Integrado (27001 + 42001)</option>
+      <option value="ISO/IEC 27001">ISO/IEC 27001:2022</option>
+      <option value="ISO/IEC 42001">ISO/IEC 42001:2023</option>
+    </select>
+  );
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Audit Workspace</h1>
-          <p className="text-sm text-slate-500 mt-1">Planificación de auditorías, checklists de evaluación y gestión de hallazgos.</p>
+    <div className="mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+        <div className="flex-1">
+          <PageHeader 
+            title="Audit Workspace"
+            description="Planificación, ejecución y seguimiento de auditorías del Sistema de Gestión de IA."
+          />
         </div>
-        
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => setIsAssistantOpen(true)}
-            className="flex items-center text-xs font-semibold text-white bg-teal-600 px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Guía Paso a Paso
-          </button>
-          <select 
-            className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-medium"
-            value={filters.standard}
-            onChange={(e) => setFilters({...filters, standard: e.target.value})}
-          >
-            <option value="Integrado">Integrado (27001 + 42001)</option>
-            <option value="ISO/IEC 27001">ISO/IEC 27001:2022</option>
-            <option value="ISO/IEC 42001">ISO/IEC 42001:2023</option>
-          </select>
+        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          {standardSelector}
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-            <CalendarDays className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Programadas</p>
-            <p className="text-lg font-bold text-slate-900">{planned}</p>
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-1">
+            Programadas
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{planned}</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-            <ClipboardCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">En Ejecución</p>
-            <p className="text-lg font-bold text-amber-700">{inProgress}</p>
-          </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 mb-1">
+            En Ejecución
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{inProgress}</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Completadas</p>
-            <p className="text-lg font-bold text-emerald-700">{completed}</p>
-          </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 mb-1">
+            Completadas
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{completed}</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Hallazgos Abiertos</p>
-            <p className="text-lg font-bold text-red-600">{openFindings}</p>
-          </div>
+        <div className="bg-white p-4 rounded border border-[var(--border)] shadow-sm flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-600 mb-1">
+            Hallazgos Abiertos
+          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">{openFindings}</span>
         </div>
       </div>
-
-      <AIAssistantDrawer 
-        isOpen={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
-        context="audit"
-      />
     </div>
   );
 }
+

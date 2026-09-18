@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { DashboardData } from '../../types';
-import { Search, AlertTriangle, ArrowRight, Plus } from 'lucide-react';
+import { Search, AlertTriangle, ArrowRight, Plus, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { SlideOver } from '../ui/SlideOver';
 import { NonConformityForm } from '../forms/NonConformityForm';
+import { DataTableShell } from '../ui/DataTableShell';
+import { StatusBadge } from '../ui/StatusBadge';
 
 export function FindingsTab({ data, standard }: { data: DashboardData, standard?: string }) {
   const nonConformities = data.nonConformities || [];
@@ -26,28 +28,36 @@ export function FindingsTab({ data, standard }: { data: DashboardData, standard?
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="relative w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Buscar hallazgos..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-[var(--border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--brand-accent)]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <button 
           onClick={() => setIsSlideOverOpen(true)}
-          className="flex items-center space-x-2 bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors"
+          className="flex items-center space-x-2 bg-[var(--brand-navy)] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[var(--brand-navy)]/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Registrar Hallazgo</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <DataTableShell
+        title="Hallazgos de Auditoría"
+        icon={Target}
+        headerActions={
+          <div className="text-sm text-[var(--text-secondary)]">
+            Total: <span className="font-medium text-[var(--text-primary)]">{displayFindings.length}</span>
+          </div>
+        }
+      >
         {displayFindings.length > 0 ? (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <thead className="bg-slate-50 border-b border-[var(--border)] text-[var(--text-secondary)]">
               <tr>
                 <th className="px-6 py-3 font-medium">Hallazgo</th>
                 <th className="px-6 py-3 font-medium">Severidad</th>
@@ -58,34 +68,36 @@ export function FindingsTab({ data, standard }: { data: DashboardData, standard?
             </thead>
             <tbody className="divide-y divide-slate-100">
               {displayFindings.map((finding) => (
-                <tr key={finding.id} className="hover:bg-slate-50">
+                <tr key={finding.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900">{finding.title}</p>
-                    <p className="text-xs text-slate-500 truncate max-w-xs" title={finding.description}>{finding.description}</p>
+                    <p className="font-medium text-[var(--text-primary)]">{finding.title}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 truncate max-w-xs" title={finding.description}>{finding.description}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                      finding.severity === 'Crítica' ? 'bg-red-100 text-red-700' :
-                      finding.severity === 'Alta' ? 'bg-orange-100 text-orange-700' :
-                      finding.severity === 'Media' ? 'bg-amber-100 text-amber-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
+                    <StatusBadge 
+                      status={
+                        finding.severity === 'Crítica' ? 'danger' :
+                        finding.severity === 'Alta' ? 'warning' :
+                        finding.severity === 'Media' ? 'info' :
+                        'success'
+                      }
+                    >
                       {finding.severity}
-                    </span>
+                    </StatusBadge>
                   </td>
                   <td className="px-6 py-4">
-                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      finding.status === 'Cerrada' ? 'bg-emerald-100 text-emerald-700' :
-                      'bg-amber-100 text-amber-700'
-                    }`}>
+                    <StatusBadge 
+                      status={finding.status === 'Cerrada' ? 'success' : 'warning'}
+                      dot
+                    >
                       {finding.status}
-                    </span>
+                    </StatusBadge>
                   </td>
-                  <td className="px-6 py-4 text-slate-500">
+                  <td className="px-6 py-4 text-[var(--text-secondary)]">
                     {format(new Date(finding.identifiedDate), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4">
-                    <a href="/performance" className="inline-flex items-center text-teal-600 hover:text-teal-700 text-xs font-bold transition-colors">
+                    <a href="/performance" className="inline-flex items-center text-[var(--brand-accent)] hover:text-[var(--brand-navy)] text-xs font-bold transition-colors">
                       Ver en CAPA <ArrowRight className="w-3 h-3 ml-1" />
                     </a>
                   </td>
@@ -95,14 +107,14 @@ export function FindingsTab({ data, standard }: { data: DashboardData, standard?
           </table>
         ) : (
           <div className="p-12 text-center flex flex-col items-center">
-            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6 text-slate-400" />
+            <div className="w-12 h-12 bg-slate-50 border border-[var(--border)] rounded-full flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6 text-[var(--text-muted)]" />
             </div>
-            <p className="text-slate-500 font-medium">No se encontraron hallazgos de auditoría</p>
-            <p className="text-sm text-slate-400 mt-1">Los hallazgos negativos generados durante la evaluación aparecerán aquí y se enviarán automáticamente a CAPA.</p>
+            <p className="text-[var(--text-primary)] font-medium">No se encontraron hallazgos de auditoría</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Los hallazgos negativos generados durante la evaluación aparecerán aquí y se enviarán automáticamente a CAPA.</p>
           </div>
         )}
-      </div>
+      </DataTableShell>
 
       <SlideOver
         isOpen={isSlideOverOpen}

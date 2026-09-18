@@ -25,8 +25,8 @@ export function EvolutionChart({ snapshots }: { snapshots: HealthSnapshot[] }) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-[320px] flex flex-col">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+      <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm h-[320px] flex flex-col">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
           Evolución del Sistema (Últimos 6 meses)
         </h2>
         <div className="flex-1 flex items-center justify-center text-slate-400">
@@ -37,11 +37,11 @@ export function EvolutionChart({ snapshots }: { snapshots: HealthSnapshot[] }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">
+    <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm h-full flex flex-col">
+      <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
         Evolución del Sistema (Últimos 6 meses)
       </h2>
-      <div className="h-64">
+      <div className="flex-1 min-h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}
@@ -103,7 +103,7 @@ export function EvolutionChart({ snapshots }: { snapshots: HealthSnapshot[] }) {
             <Line
               type="monotone"
               dataKey="Salud Global"
-              stroke="#10b981"
+              stroke="#0f766e"
               strokeWidth={3}
               dot={{ r: 4 }}
             />

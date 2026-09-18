@@ -1,5 +1,5 @@
 import { DashboardData } from "../types";
-import { getISO42001AdaptedCatalog, getISO42001AdaptedControls, resolveAssessment } from "../data/normativeCatalogAdapter";
+import { getISO42001AdaptedCatalog, getISO42001AdaptedControls, resolveAssessment, evaluateControlEffectiveness, getControlApplicability } from "../data/normativeCatalogAdapter";
 
 export const calculateDashboardKPIs = (data: DashboardData, filters?: any) => {
   const standard = filters?.standard || 'Integrado';
@@ -192,31 +192,53 @@ export const calculateDashboardKPIs = (data: DashboardData, filters?: any) => {
     });
   }
 
+  let effectivenessCoverage = { 
+    evaluated: 0, 
+    applicable: 0,
+    realTestCount: 0,
+    legacyCount: 0,
+    effectiveCount: 0,
+    partialCount: 0,
+    ineffectiveCount: 0,
+    notTestedCount: 0
+  };
+
   if (standard === 'Integrado' || standard === 'ISO/IEC 42001') {
     // ONLY 38 Controls for Efficacy
     const ctrls42001 = getISO42001AdaptedControls();
     ctrls42001.forEach(catCtrl => {
       const a = resolveAssessment(catCtrl, data.controlAssessments || [], true);
-      if (a?.status !== 'not_applicable') {
-        totalEfficacyItems++;
-        if (a?.testResult === 'not_tested' || !a?.testResult) {
-          notTestedCount++;
-        } else {
+      const applicability = getControlApplicability(a);
+
+      if (applicability === 'applicable') {
+        effectivenessCoverage.applicable++;
+        totalEfficacyItems++; // maintain compatibility with legacy denominator logic
+
+        const evaluation = evaluateControlEffectiveness(catCtrl.id, data.controlEffectivenessTests || [], a);
+
+        if (evaluation.hasData && evaluation.result !== 'NOT_TESTED') {
+          effectivenessCoverage.evaluated++;
           evaluatedEfficacyItems++;
+          totalEfficacyScore += getEfficacyScore(evaluation.result.toLowerCase());
+          
+          if (evaluation.source === 'real_test') effectivenessCoverage.realTestCount++;
+          if (evaluation.source === 'legacy') effectivenessCoverage.legacyCount++;
+          
+          if (evaluation.result === 'EFFECTIVE') effectivenessCoverage.effectiveCount++;
+          else if (evaluation.result === 'PARTIALLY_EFFECTIVE') effectivenessCoverage.partialCount++;
+          else if (evaluation.result === 'INEFFECTIVE') effectivenessCoverage.ineffectiveCount++;
+        } else {
+          notTestedCount++;
+          effectivenessCoverage.notTestedCount++;
         }
-        totalEfficacyScore += getEfficacyScore(a?.testResult);
       }
     });
   }
 
   const hasEfficacyData = evaluatedEfficacyItems > 0;
   let efficacyScore = 0;
-  if (totalEfficacyItems > 0) {
-    // Only calculate score for evaluated items to avoid false negative precision, 
-    // or calculate over total items? The prompt says "Si no existe un campo de eficacia... retornar null o estado Sin evaluar"
-    // So if no data, we handle it via flags. But what if 1 is evaluated and 37 not_tested?
-    // Usually not_tested counts as 0 in efficacy, so denominator should be total items.
-    efficacyScore = Math.round(totalEfficacyScore / totalEfficacyItems);
+  if (evaluatedEfficacyItems > 0) {
+    efficacyScore = Math.round(totalEfficacyScore / evaluatedEfficacyItems);
   }
 
   // ---------------------------------------------------------

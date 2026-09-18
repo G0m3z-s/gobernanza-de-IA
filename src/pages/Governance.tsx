@@ -14,7 +14,7 @@ import { HistoryTab } from '../components/governance/HistoryTab';
 type Tab = 'processMap' | 'processes' | 'stakeholders' | 'roles' | 'objectives' | 'governanceMap' | 'history';
 
 export function Governance() {
-  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard } = useStore();
+  const { data, fetchData, loading, error, selectedStandard, setSelectedStandard , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('processMap');
   
@@ -37,8 +37,14 @@ export function Governance() {
   }, [selectedStandard]);
   
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (error) {
     return (

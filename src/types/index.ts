@@ -101,10 +101,15 @@ export interface AISystem {
 
 export interface Risk {
   id: string;
+  organizationId?: string;
   name: string;
+  description?: string;
   type: string;
   level: string;
   status: string;
+  identifiedDate?: string;
+  reportedBy?: string;
+  standardIds?: string[];
 }
 
 export interface Alert {
@@ -198,6 +203,14 @@ export interface NonConformity {
   status: NonConformityStatus;
   severity: 'Baja' | 'Media' | 'Alta' | 'Crítica';
   capaIds?: string[];
+  findingType?: 'OBSERVATION' | 'OPPORTUNITY_FOR_IMPROVEMENT' | 'NONCONFORMITY' | 'CONTROL_DEFICIENCY';
+  sourceType?: 'manual' | 'control_effectiveness_test' | 'other' | 'audit';
+  sourceId?: string;
+  controlId?: string;
+  requirementId?: string;
+  createdBy?: string;
+  auditId?: string;
+  auditItemId?: string;
 }
 
 export type CAPAStatus = 'Planeada' | 'En Progreso' | 'Implementada' | 'Verificada' | 'Cerrada';
@@ -213,6 +226,9 @@ export interface CAPA {
   status: CAPAStatus;
   completionDate?: string;
   verificationNotes?: string;
+  controlId?: string;
+  effectivenessTestId?: string;
+  createdBy?: string;
 }
 
 export interface NormativeControl {
@@ -230,6 +246,26 @@ export interface NormativeControl {
   ownerId: string;
 }
 
+
+
+export interface AuditChecklistItem {
+  id: string;
+  organizationId: string;
+  auditId: string;
+  standardId: string;
+  itemType: 'requirement' | 'control';
+  normativeId: string;
+  code: string;
+  title: string;
+  sequence?: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  result: 'NOT_EVALUATED' | 'CONFORMING' | 'NONCONFORMING' | 'OBSERVATION' | 'OPPORTUNITY_FOR_IMPROVEMENT' | 'NOT_APPLICABLE';
+  auditorNotes?: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+}
+
 export interface AuditSession {
   id: string;
   organizationId: string;
@@ -240,6 +276,10 @@ export interface AuditSession {
   plannedDate: string;
   leadAuditor: string;
   scope?: string;
+  objective?: string;
+  criteria?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface DashboardData {
@@ -253,6 +293,7 @@ export interface DashboardData {
   healthSnapshots: HealthSnapshot[];
   activityLogs: ActivityLog[];
   auditItems: AuditItem[];
+  auditChecklistItems?: AuditChecklistItem[];
   implementationActions: ImplementationAction[];
   assessmentHistory: AssessmentHistory[];
   processInputs?: ProcessInput[];
@@ -276,6 +317,9 @@ export interface DashboardData {
   capas?: CAPA[];
   normativeControls?: NormativeControl[];
   auditSessions?: AuditSession[];
+  evidenceLinks?: EvidenceLink[];
+  riskControlLinks?: RiskControlLink[];
+  controlEffectivenessTests?: ControlEffectivenessTest[];
 }
 
 export interface ImplementationAction {
@@ -626,4 +670,60 @@ export interface AIMetric {
   responsible: string;
   breached?: boolean;
   createdAt?: string;
+}
+
+export interface Evidence {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  owner?: string;
+  process?: string;
+  controls?: number;
+  expires?: string;
+  status: string; // 'Vigente' | 'Vencida' | 'En revisión'
+}
+
+
+export interface RiskControlLink {
+  id: string;
+  organizationId: string;
+  riskId: string;
+  controlId: string;
+  relationType: 'treats';
+  createdAt: string;
+  createdBy: string;
+}
+
+
+export interface ControlEffectivenessTest {
+  id: string;
+  organizationId: string;
+  controlId: string;
+  title: string;
+  objective?: string;
+  testMethod: 'DOCUMENT_REVIEW' | 'INTERVIEW' | 'OBSERVATION' | 'SAMPLE_REVIEW' | 'REPERFORMANCE' | 'TECHNICAL_TEST' | 'METRIC_REVIEW' | 'OTHER';
+  procedure?: string;
+  sampleDescription?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  performedAt: string;
+  performedBy: string;
+  reviewedBy?: string;
+  status: 'DRAFT' | 'COMPLETED' | 'REVIEWED';
+  result: 'NOT_EVALUATED' | 'EFFECTIVE' | 'PARTIALLY_EFFECTIVE' | 'INEFFECTIVE' | 'INCONCLUSIVE';
+  observations?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface EvidenceLink {
+  id: string;
+  organizationId: string;
+  evidenceId: string;
+  targetType: 'control' | 'requirement' | 'risk' | 'auditFinding' | 'capa' | 'auditItem';
+  targetId: string;
+  relationType: 'supports' | 'reviewed';
+  createdAt: string;
+  createdBy: string;
 }

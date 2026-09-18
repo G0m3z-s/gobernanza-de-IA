@@ -9,7 +9,7 @@ import { ShieldCheck, BarChart3 } from 'lucide-react';
 type Tab = 'soa' | 'maturity';
 
 export function ControlCenter() {
-  const { data, fetchData, loading, selectedStandard, setSelectedStandard } = useStore();
+  const { data, fetchData, loading, selectedStandard, setSelectedStandard , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('soa');
   
@@ -30,8 +30,14 @@ export function ControlCenter() {
   }, [selectedStandard]);
 
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (loading || !data) {
     return (
@@ -42,17 +48,17 @@ export function ControlCenter() {
   }
 
   return (
-    <div className="space-y-6 pb-12 flex flex-col h-full">
+    <div className="space-y-4 max-w-[1920px] mx-auto w-full pb-12 flex flex-col h-full">
       <ControlHeader data={data} filters={filters} setFilters={setFilters} />
 
-      <div className="border-b border-slate-200">
+      <div className="border-b border-[var(--border)]">
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab('soa')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
               activeTab === 'soa'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-[var(--brand-accent)] text-[var(--brand-accent)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -61,10 +67,10 @@ export function ControlCenter() {
           
           <button
             onClick={() => setActiveTab('maturity')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
               activeTab === 'maturity'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-[var(--brand-accent)] text-[var(--brand-accent)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -73,7 +79,7 @@ export function ControlCenter() {
         </nav>
       </div>
 
-      <div className="flex-1 mt-6">
+      <div className="flex-1 mt-4">
         {activeTab === 'soa' && <SoaTab data={data} standard={filters.standard} />}
         {activeTab === 'maturity' && <MaturityTab data={data} standard={filters.standard} />}
       </div>

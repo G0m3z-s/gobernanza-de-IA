@@ -70,3 +70,130 @@ export function resolveAssessment(catReq: any, assessments: any[], isControl = f
   }
   return assessment;
 }
+
+export function getControlApplicability(assessment: any) {
+  if (!assessment) return 'not_evaluated';
+  if (assessment.applicability) return assessment.applicability;
+  if (assessment.status === 'not_applicable') return 'not_applicable';
+  return 'not_evaluated';
+}
+
+export function getControlImplementationStatus(assessment: any) {
+  if (!assessment) return 'not_evaluated';
+  // Avoid returning not_applicable as an implementation status conceptually for new logic
+  if (assessment.status === 'not_applicable' && assessment.applicability !== 'not_applicable') {
+    // If it's legacy and doesn't have applicability, we still return the raw status or map it to not_evaluated implementation 
+    // But to not break legacy UI, we might return it. The prompt says "NO incluir not_applicable como nuevo estado de implementación".
+    // If applicability is not_applicable, UI handles it. So implementation status could be whatever it was.
+  }
+  return assessment.status || 'not_evaluated';
+}
+
+export function getControlEvidenceStatus(assessment: any) {
+  if (!assessment) return null;
+  // Use existing evidenceStatus if it's there. 
+  // If it's 'pending_review' but we don't know if there are actual evidences, we trust the DB field for now, 
+  // EXCEPT when creating a new form where we will remove the default 'pending_review'.
+  return assessment.evidenceStatus || null; 
+}
+
+export function getControlTestResult(assessment: any) {
+  if (!assessment) return 'not_tested';
+  return assessment.testResult || 'not_tested';
+}
+
+
+export interface EffectivenessEvaluation {
+  hasData: boolean;
+  source: 'real_test' | 'legacy' | 'none';
+  result: 'EFFECTIVE' | 'PARTIALLY_EFFECTIVE' | 'INEFFECTIVE' | 'INCONCLUSIVE' | 'NOT_TESTED';
+  testId?: string;
+  performedAt?: string;
+  hasSubsequentInconclusive?: boolean;
+}
+
+export function evaluateControlEffectiveness(controlId: string, tests: any[], assessment?: any): EffectivenessEvaluation {
+  const safeTests = tests || [];
+  
+  // Filter for completed/reviewed tests for this control
+  const validTests = safeTests.filter(t => 
+    t.controlId === controlId && 
+    (t.status === 'COMPLETED' || t.status === 'REVIEWED')
+  );
+
+  // Sort by performedAt desc, fallback to createdAt desc
+  validTests.sort((a, b) => {
+    const timeA = new Date(a.performedAt).getTime();
+    const timeB = new Date(b.performedAt).getTime();
+    if (timeA === timeB) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return timeB - timeA;
+  });
+
+  const latestConclusive = validTests.find(t => t.result !== 'INCONCLUSIVE');
+  const latestTest = validTests[0];
+
+  if (latestConclusive) {
+    return {
+      hasData: true,
+      source: 'real_test',
+      result: latestConclusive.result,
+      testId: latestConclusive.id,
+      performedAt: latestConclusive.performedAt,
+      hasSubsequentInconclusive: latestTest && latestTest.id !== latestConclusive.id && latestTest.result === 'INCONCLUSIVE'
+    };
+  }
+
+  if (assessment?.testResult && assessment.testResult !== 'not_tested') {
+    return {
+      hasData: true,
+      source: 'legacy',
+      result: assessment.testResult.toUpperCase(),
+    };
+  }
+
+  return {
+    hasData: false,
+    source: 'none',
+    result: 'NOT_TESTED'
+  };
+}
+
+export function getCurrentControlEffectiveness(controlId: string, tests: any[], assessment?: any) {
+  if (!tests) return assessment?.testResult || 'not_tested';
+  
+  // Filter for completed/reviewed tests for this control
+  const validTests = tests.filter(t => 
+    t.controlId === controlId && 
+    (t.status === 'COMPLETED' || t.status === 'REVIEWED')
+  );
+
+  if (validTests.length === 0) {
+    return assessment?.testResult || 'not_tested';
+  }
+
+  // Sort by performedAt desc, fallback to createdAt desc
+  validTests.sort((a, b) => {
+    const timeA = new Date(a.performedAt).getTime();
+    const timeB = new Date(b.performedAt).getTime();
+    if (timeA === timeB) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return timeB - timeA;
+  });
+
+  // Find the most recent test that is NOT inconclusive
+  const latestConclusive = validTests.find(t => t.result !== 'INCONCLUSIVE');
+  
+  if (latestConclusive) {
+    // Map to legacy lowercase values or use raw
+    return latestConclusive.result.toLowerCase();
+  }
+  
+  // If all are inconclusive, what do we return? Legacy or inconclusive? 
+  // "Una prueba INCONCLUSIVE ... no debería sustituir un resultado anterior válido" 
+  // If there is no previous valid result, return legacy.
+  return assessment?.testResult || 'not_tested';
+}
+

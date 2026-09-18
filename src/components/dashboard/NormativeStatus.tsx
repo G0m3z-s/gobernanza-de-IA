@@ -51,9 +51,9 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
       let color = '';
       let text = percent + '%';
       if (percent < 40) color = 'bg-rose-500';
-      else if (percent < 70) color = 'bg-amber-400';
-      else if (percent < 90) color = 'bg-teal-400';
-      else color = 'bg-emerald-500';
+      else if (percent < 70) color = 'bg-amber-500';
+      else if (percent < 90) color = 'bg-teal-500';
+      else color = 'bg-emerald-600';
 
       return { color, text, percent };
     }
@@ -104,9 +104,9 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
     let color = '';
     let text = percent + '%';
     if (percent < 40) color = 'bg-rose-500';
-    else if (percent < 70) color = 'bg-amber-400';
-    else if (percent < 90) color = 'bg-teal-400';
-    else color = 'bg-emerald-500';
+    else if (percent < 70) color = 'bg-amber-500';
+    else if (percent < 90) color = 'bg-teal-500';
+    else color = 'bg-emerald-600';
 
     return { color, text, percent };
   };
@@ -146,9 +146,9 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
     const controls = data.normativeControls?.filter(c => c.standard === std && c.code.startsWith(clause + '.')) || [];
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 flex-1">
         <div>
-          <h4 className="text-sm font-semibold text-slate-800 mb-3 border-b border-slate-200 pb-2">Requisitos ({resolvedReqs.length})</h4>
+          <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3 border-b border-[var(--border)] pb-2">Requisitos ({resolvedReqs.length})</h4>
           {resolvedReqs.length > 0 ? (
             <div className="space-y-3">
               {resolvedReqs.map(req => {
@@ -156,7 +156,7 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
                 const reqTitle = req.title || 'Requisito de la norma';
                 const reqDesc = req.description || 'Detalle no disponible para este requisito.';
                 return (
-                <div key={req.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div key={req.id} className="bg-white rounded p-4 border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-slate-900 text-sm">{reqCode}</span>
                     <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
@@ -182,11 +182,11 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
 
         {clause === 'Anexo A' || controls.length > 0 ? (
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-3 border-b border-slate-200 pb-2">Controles Asociados ({controls.length})</h4>
+            <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3 border-b border-[var(--border)] pb-2">Controles Asociados ({controls.length})</h4>
             {controls.length > 0 ? (
               <div className="space-y-3">
                 {controls.map(ctrl => (
-                  <div key={ctrl.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                  <div key={ctrl.id} className="bg-white rounded p-4 border border-[var(--border)]">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-slate-900 text-sm">{ctrl.code}</span>
                       <div className="flex items-center space-x-2">
@@ -216,13 +216,15 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">Estado Normativo</h2>
+      <div className="bg-white rounded border border-[var(--border)] p-5 shadow-sm h-full flex flex-col">
+        <div className="flex items-center justify-between mb-4 border-b border-[var(--border)] pb-3">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Estado Normativo</h2>
+        </div>
         
         <div className="space-y-6">
           {standards.map(std => (
             <div key={std}>
-              <h3 className="text-sm font-medium text-slate-600 mb-2">{std}</h3>
+              <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-2">{std}</h3>
               
               <div className="flex space-x-1">
                 {clauses.map(clause => {
@@ -230,7 +232,7 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
                   return (
                     <div
                       key={clause}
-                      className={`flex-1 h-8 ${info.color} rounded-sm cursor-pointer hover:opacity-80 transition-opacity relative group`}
+                      className={`flex-1 h-6 ${info.color} rounded-sm cursor-pointer hover:opacity-80 transition-opacity relative group border border-white/20`}
                       onClick={() => setSelectedClause({ clause, std })}
                     >
                       <div className="absolute hidden group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-1 w-max bg-slate-800 text-white text-xs px-2 py-1 rounded z-10 shadow-lg text-center">
@@ -252,10 +254,10 @@ export function NormativeStatus({ data, standard }: { data: DashboardData, stand
           ))}
         </div>
         
-        <div className="flex items-center justify-center space-x-4 mt-6 pt-4 border-t border-slate-100 text-[10px] text-slate-500 flex-wrap gap-y-2">
-          <div className="flex items-center"><div className="w-2 h-2 bg-emerald-500 rounded-sm mr-1"></div>Saludable</div>
-          <div className="flex items-center"><div className="w-2 h-2 bg-teal-400 rounded-sm mr-1"></div>En progreso</div>
-          <div className="flex items-center"><div className="w-2 h-2 bg-amber-400 rounded-sm mr-1"></div>Parcial</div>
+        <div className="flex items-center justify-center space-x-4 mt-auto pt-4 text-[10px] text-slate-500 flex-wrap gap-y-2 border-t border-[var(--border)]">
+          <div className="flex items-center"><div className="w-2 h-2 bg-emerald-600 rounded-sm mr-1"></div>Saludable</div>
+          <div className="flex items-center"><div className="w-2 h-2 bg-teal-500 rounded-sm mr-1"></div>En progreso</div>
+          <div className="flex items-center"><div className="w-2 h-2 bg-amber-500 rounded-sm mr-1"></div>Parcial</div>
           <div className="flex items-center"><div className="w-2 h-2 bg-rose-500 rounded-sm mr-1"></div>Brecha</div>
           <div className="flex items-center"><div className="w-2 h-2 bg-slate-300 rounded-sm mr-1"></div>No evaluado</div>
         </div>

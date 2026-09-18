@@ -5,12 +5,11 @@ import { AuditHeader } from '../components/audit/AuditHeader';
 import { AuditPlanTab } from '../components/audit/AuditPlanTab';
 import { AuditExecutionTab } from '../components/audit/AuditExecutionTab';
 import { FindingsTab } from '../components/audit/FindingsTab';
-import { CalendarDays, ClipboardCheck, AlertTriangle } from 'lucide-react';
 
 type Tab = 'plan' | 'execution' | 'findings';
 
 export function AuditWorkspace() {
-  const { data, fetchData, loading, selectedStandard, setSelectedStandard } = useStore();
+  const { data, fetchData, loading, selectedStandard, setSelectedStandard , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('plan');
   
@@ -31,62 +30,65 @@ export function AuditWorkspace() {
   }, [selectedStandard]);
 
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (loading || !data) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--brand-accent)] border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12 flex flex-col h-full">
+    <div className="w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8 overflow-x-hidden flex flex-col h-full space-y-6">
       <AuditHeader data={data} filters={filters} setFilters={setFilters} />
 
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-8">
+      <div className="border-b border-[var(--border)]">
+        <nav className="flex space-x-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab('plan')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'plan'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]'
             }`}
           >
-            <CalendarDays className="w-4 h-4" />
-            <span>Plan de Auditorías</span>
+            Plan de Auditorías
           </button>
           
           <button
             onClick={() => setActiveTab('execution')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'execution'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]'
             }`}
           >
-            <ClipboardCheck className="w-4 h-4" />
-            <span>Ejecución / Checklists</span>
+            Ejecución
           </button>
 
           <button
             onClick={() => setActiveTab('findings')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'findings'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]'
             }`}
           >
-            <AlertTriangle className="w-4 h-4" />
-            <span>Registro de Hallazgos</span>
+            Hallazgos
           </button>
         </nav>
       </div>
 
-      <div className="flex-1 mt-6">
+      <div className="flex-1 mt-4">
         {activeTab === 'plan' && <AuditPlanTab data={data} standard={filters.standard} />}
         {activeTab === 'execution' && <AuditExecutionTab data={data} standard={filters.standard} />}
         {activeTab === 'findings' && <FindingsTab data={data} standard={filters.standard} />}

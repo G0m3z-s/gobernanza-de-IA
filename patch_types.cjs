@@ -1,13 +1,15 @@
 const fs = require('fs');
 let content = fs.readFileSync('src/types/index.ts', 'utf8');
 
-const target1 = "status: 'not_evaluated' | 'gap' | 'planned' | 'documented' | 'implemented' | 'evidenced' | 'verified';";
-const replacement1 = "status: 'not_evaluated' | 'gap' | 'planned' | 'documented' | 'implemented' | 'evidenced' | 'verified' | 'not_applicable';";
+content = content.replace(
+  /targetType: 'control' | 'requirement' | 'risk' | 'auditFinding' | 'capa';/,
+  "targetType: 'control' | 'requirement' | 'risk' | 'auditFinding' | 'capa' | 'auditItem';"
+);
 
-if (content.includes(target1)) {
-  content = content.replace(target1, replacement1);
-  fs.writeFileSync('src/types/index.ts', content);
-  console.log("Success patch types");
-} else {
-  console.log("Failed patch types");
-}
+content = content.replace(
+  /relationType: 'supports';/,
+  "relationType: 'supports' | 'reviewed';"
+);
+
+fs.writeFileSync('src/types/index.ts', content);
+console.log('patched types');

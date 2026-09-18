@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { DashboardData, Process, AISystem, Risk, Alert, RequirementAssessment, ControlAssessment, HealthSnapshot, ActivityLog, AuditItem, ImplementationAction, NormativeControl } from '../types';
-import { collection, query, where, getDocs, doc, getDoc, orderBy, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, addDoc, updateDoc, serverTimestamp, setDoc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 interface AppState {
@@ -10,6 +10,14 @@ interface AppState {
   selectedStandard: string;
   setSelectedStandard: (standard: string) => void;
   fetchData: (orgId: string) => Promise<void>;
+  clearData: () => void;
+  addEvidenceLink: (link: any) => Promise<void>;
+  removeEvidenceLink: (linkId: string) => Promise<void>;
+  addRiskControlLink: (link: any) => Promise<void>;
+  removeRiskControlLink: (id: string) => Promise<void>;
+  addControlEffectivenessTest: (test: any) => Promise<void>;
+  updateControlEffectivenessTest: (id: string, updates: any) => Promise<void>;
+  deleteControlEffectivenessTest: (id: string) => Promise<void>;
   addNonConformity: (nc: any) => Promise<void>;
   addRisk: (risk: any) => Promise<void>;
   addCapa: (capa: any) => Promise<void>;
@@ -33,6 +41,9 @@ interface AppState {
   updateControlAssessment: (id: string, updates: Partial<ControlAssessment>) => Promise<void>;
   addControlAssessment: (assessment: any) => Promise<string>;
   addAuditSession: (session: any) => Promise<void>;
+  addAuditChecklistItem: (item: any) => Promise<void>;
+  updateAuditChecklistItem: (id: string, updates: any) => Promise<void>;
+  deleteAuditChecklistItem: (id: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -530,6 +541,235 @@ export const useStore = create<AppState>((set, get) => ({
       throw error;
     }
   },
+  addAuditChecklistItem: async (item) => {
+    try {
+      if (!item.id) {
+        throw new Error('addAuditChecklistItem requires item.id (deterministic ID)');
+      }
+      const docRef = doc(db, 'auditChecklistItems', item.id);
+      
+      const transactionResult = await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(docRef);
+        
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (data.status !== 'NOT_STARTED' || data.result !== 'NOT_EVALUATED') {
+            console.log('Skipping existing AuditChecklistItem due to progress:', item.id);
+            return { action: 'no-op', reason: 'progress' };
+          }
+          return { action: 'no-op', reason: 'exists' };
+        }
+
+        const itemToSave = {
+          ...item,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        transaction.set(docRef, itemToSave);
+        return { action: 'created', item: itemToSave };
+      });
+      
+      if (transactionResult.action === 'created') {
+        const currentData = get().data;
+        if (currentData) {
+          // Avoid duplicates by filtering first
+          set({
+            data: {
+              ...currentData,
+              auditChecklistItems: [
+                ...(currentData.auditChecklistItems || []).filter(i => i.id !== item.id), 
+                { ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+              ]
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error adding Audit Checklist Item:', error);
+      throw error;
+    }
+  },
+  updateAuditChecklistItem: async (id, updates) => {
+    try {
+      const docRef = doc(db, 'auditChecklistItems', id);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            auditChecklistItems: (currentData.auditChecklistItems || []).map(i => 
+              i.id === id ? { ...i, ...updates, updatedAt: new Date().toISOString() } : i
+            )
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating Audit Checklist Item:', error);
+      throw error;
+    }
+  },
+  deleteAuditChecklistItem: async (id) => {
+    try {
+      const docRef = doc(db, 'auditChecklistItems', id);
+      await deleteDoc(docRef);
+      
+      const currentData = get().data;
+      if (currentData) {
+        set({
+          data: {
+            ...currentData,
+            auditChecklistItems: (currentData.auditChecklistItems || []).filter(i => i.id !== id)
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting Audit Checklist Item:', error);
+      throw error;
+    }
+  },
+  clearData: () => set({ data: null, error: null }),
+  
+  
+  
+  addControlEffectivenessTest: async (test: any) => {
+    try {
+      if (test.id) {
+        await setDoc(doc(db, 'controlEffectivenessTests', test.id), test);
+      } else {
+        await addDoc(collection(db, 'controlEffectivenessTests'), test);
+      }
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          controlEffectivenessTests: [...(state.data.controlEffectivenessTests || []), test]
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error adding control effectiveness test:", error);
+      throw error;
+    }
+  },
+  updateControlEffectivenessTest: async (id: string, updates: any) => {
+    try {
+      await updateDoc(doc(db, 'controlEffectivenessTests', id), updates);
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          controlEffectivenessTests: (state.data.controlEffectivenessTests || []).map((t: any) => t.id === id ? { ...t, ...updates } : t)
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error updating control effectiveness test:", error);
+      throw error;
+    }
+  },
+  deleteControlEffectivenessTest: async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'controlEffectivenessTests', id));
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          controlEffectivenessTests: (state.data.controlEffectivenessTests || []).filter((t: any) => t.id !== id)
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error deleting control effectiveness test:", error);
+      throw error;
+    }
+  },
+  addRiskControlLink: async (link: any) => {
+    try {
+      if (link.id) {
+        await setDoc(doc(db, 'riskControlLinks', link.id), link);
+      } else {
+        await addDoc(collection(db, 'riskControlLinks'), link);
+      }
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          riskControlLinks: [...(state.data.riskControlLinks || []), link]
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error adding risk control link:", error);
+      throw error;
+    }
+  },
+  removeRiskControlLink: async (linkId: string) => {
+    try {
+      await deleteDoc(doc(db, 'riskControlLinks', linkId));
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          riskControlLinks: (state.data.riskControlLinks || []).filter((l: any) => l.id !== linkId)
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error removing risk control link:", error);
+      throw error;
+    }
+  },
+  addEvidenceLink: async (link: any) => {
+    try {
+      if (link.id) {
+        const linkRef = doc(db, 'evidenceLinks', link.id);
+        const didCreate = await runTransaction(db, async (transaction) => {
+          const docSnap = await transaction.get(linkRef);
+          if (docSnap.exists()) {
+            return false; // NO-OP: the deterministic link already exists
+          }
+          transaction.set(linkRef, link);
+          return true;
+        });
+        
+        if (didCreate) {
+          set((state) => {
+            if (!state.data) return state;
+            // Prevent duplicate in local state just in case
+            if ((state.data.evidenceLinks || []).some((l: any) => l.id === link.id)) return state;
+            
+            return {
+              data: {
+                ...state.data,
+                evidenceLinks: [...(state.data.evidenceLinks || []), link]
+              }
+            };
+          });
+        }
+      } else {
+        const docRef = await addDoc(collection(db, 'evidenceLinks'), link);
+        set((state) => ({
+          data: state.data ? {
+            ...state.data,
+            evidenceLinks: [...(state.data.evidenceLinks || []), { ...link, id: docRef.id }]
+          } : null
+        }));
+      }
+    } catch (error) {
+      console.error("Error adding evidence link:", error);
+      throw error;
+    }
+  },
+  removeEvidenceLink: async (linkId: string) => {
+    try {
+      await deleteDoc(doc(db, 'evidenceLinks', linkId));
+      set((state) => ({
+        data: state.data ? {
+          ...state.data,
+          evidenceLinks: (state.data.evidenceLinks || []).filter((l: any) => l.id !== linkId)
+        } : null
+      }));
+    } catch (error) {
+      console.error("Error removing evidence link:", error);
+      throw error;
+    }
+  },
+
   fetchData: async (orgId: string) => {
     set({ loading: true, error: null });
     try {
@@ -545,13 +785,18 @@ export const useStore = create<AppState>((set, get) => ({
         'processInputs', 'processOutputs', 'processActivities', 'stakeholders', 'governanceRoles',
         'objectives', 'indicators', 'indicatorMeasurements', 'processDependencies', 'processHistory',
         'aiImpactAssessments', 'aiDataResources', 'aiLifecycleEvents', 'aiIncidents', 'aiProviders', 'aiHistory',
-        'nonConformities', 'capas', 'normativeControls', 'auditSessions', 'aiMetrics'
+        'nonConformities', 'capas', 'normativeControls', 'auditSessions', 'aiMetrics', 'evidenceLinks', 'auditChecklistItems'
       ];
 
       const results = await Promise.all(collectionsToFetch.map(async (coll) => {
-        const q = query(collection(db, coll), where('organizationId', '==', orgId));
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        try {
+          const q = query(collection(db, coll), where('organizationId', '==', orgId));
+          const snap = await getDocs(q);
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) {
+          console.error("Error fetching collection:", coll, e);
+          throw e; // rethrow to be caught by the outer catch
+        }
       }));
 
       set({ 
@@ -589,11 +834,15 @@ export const useStore = create<AppState>((set, get) => ({
           normativeControls: results[29] as any[] || [],
           auditSessions: results[30] as any[] || [],
           aiMetrics: results[31] as any[] || [],
+          evidenceLinks: results[32] as any[] || [],
+          auditChecklistItems: results[33] as any[] || [],
+          riskControlLinks: results[33] as any[] || [],
+          controlEffectivenessTests: results[34] as any[] || [],
         }, 
         loading: false 
       });
     } catch (error: any) {
-      set({ error: error.message, loading: false });
+      set({ error: "Failed fetching data: " + error.message, loading: false });
     }
   }
 }));

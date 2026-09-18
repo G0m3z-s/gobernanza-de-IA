@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-navy: #0F2742;
+    --brand-navy-hover: #163B5C;
+    --brand-accent: #0F766E;
+    --brand-accent-hover: #0B625C;
+    --app-bg: #F4F7FA;
+    --surface: #FFFFFF;
+    --border: #DCE4EC;
+    --text-primary: #172033;
+    --text-secondary: #667085;
+    --text-muted: #98A2B3;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+}

@@ -41,7 +41,12 @@ export function RequirementDrawer({ requirement, onClose, onRefresh }: { require
             standard: requirement.standard,
             clause: requirement.clause,
             control: requirement.requirement,
-            status,
+            ...(requirement.standard === 'ISO/IEC 42001' ? {
+              applicability: status === 'not_applicable' ? 'not_applicable' : 'applicable',
+              status: status === 'not_applicable' ? (requirement.realStatus || 'not_evaluated') : status
+            } : {
+              status
+            }),
             ownerId,
             justification: status === 'not_applicable' ? justification : null,
             updatedAt: new Date().toISOString()

@@ -10,7 +10,7 @@ import { AlertCircle, FileCheck, Users, Activity } from 'lucide-react';
 type Tab = 'nonConformities' | 'capa' | 'team';
 
 export function Performance() {
-  const { data, fetchData, loading, selectedStandard, setSelectedStandard } = useStore();
+  const { data, fetchData, loading, selectedStandard, setSelectedStandard , clearData} = useStore();
   const { currentOrgId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('team');
   
@@ -31,8 +31,14 @@ export function Performance() {
   }, [selectedStandard]);
 
   useEffect(() => {
-    if (currentOrgId && !data) fetchData(currentOrgId);
-  }, [fetchData, currentOrgId]);
+    if (currentOrgId) {
+      if (!data || data.organization?.id !== currentOrgId) {
+        fetchData(currentOrgId);
+      }
+    } else {
+      clearData();
+    }
+  }, [fetchData, currentOrgId, data, clearData]);
 
   if (loading || !data) {
     return (
